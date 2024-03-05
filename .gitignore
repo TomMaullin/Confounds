@@ -1,1 +1,5 @@
-temp_mmap/*
+temp_mmap
+data
+lib/__pycache__
+.ipynb_checkpoints
+lib/.ipynb_checkpoints
