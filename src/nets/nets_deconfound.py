@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
-from src.nan_handling import create_nan_patterns, all_non_nan_inds
+from src.nantools.create_nan_patterns import create_nan_patterns
+from src.nantools.all_non_nan_inds import all_non_nan_inds
 from src.nets.nets_demean import nets_demean
 
 # ==========================================================================

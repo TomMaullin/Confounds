@@ -3,7 +3,11 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from src.nets import nets_load_match, nets_normalise, nets_inverse_normal, nets_deconfound
+from src.nets.nets_load_match import nets_load_match
+from src.nets.nets_normalise import nets_normalise
+from src.nets.nets_inverse_normal import nets_inverse_normal
+from src.nets.nets_deconfound import nets_deconfound
+
 from src.duplicate import duplicate_categorical, duplicate_demedian_norm_by_site
 from src.preproc import datenum, days_in_year, filter_columns_by_site
 
@@ -86,7 +90,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
         # Perform deconfounding
         conf_nonlin_deconf = nets_deconfound(conf_group_site_nonlin,
                                              all_conf_site,
-                                             'qr')
+                                             'svd')
         
         # Reindex the dataframe to fill off-site values with zeros
         conf_nonlin_deconf = conf_nonlin_deconf.reindex(conf_group.index).fillna(0)
@@ -129,7 +133,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
     conf_nonlin = MemoryMappedDF(conf_nonlin)
         
     # Deconfound IDPs
-    IDPs_deconf = nets_deconfound(IDPs[:,:], all_conf[:,:], 'qr')
+    IDPs_deconf = nets_deconfound(IDPs[:,:], all_conf[:,:], 'svd')
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)

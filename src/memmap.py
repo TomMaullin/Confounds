@@ -1,9 +1,9 @@
 import os
-import numpy as np
-import pandas as pd
 import uuid
 import atexit
-from src.nan_handling import create_nan_patterns
+import numpy as np
+import pandas as pd
+from src.nantools.create_nan_patterns import create_nan_patterns
 
 # ==================================================================================
 #

@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from src.nan_handling import format_constant_cols
+from src.nantools.format_constant_cols import format_constant_cols
 
 # ==========================================================================
 #
