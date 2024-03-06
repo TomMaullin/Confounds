@@ -6,7 +6,8 @@ import pandas as pd
 from src.nets.nets_load_match import nets_load_match
 from src.nets.nets_inverse_normal import nets_inverse_normal
 
-from src.preproc import datenum, days_in_year
+from src.preproc.datenum import datenum
+from src.preproc.days_in_year import days_in_year
 
 from src.memmap import MemoryMappedDF
 
