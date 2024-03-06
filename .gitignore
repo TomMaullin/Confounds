@@ -3,3 +3,7 @@ data
 lib/__pycache__
 .ipynb_checkpoints
 lib/.ipynb_checkpoints
+src/__pycache__
+src/nantools/__pycache__
+src/nets/__pycache__
+
