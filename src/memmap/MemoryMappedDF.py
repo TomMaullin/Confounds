@@ -1,6 +1,7 @@
 import os
 import uuid
 import atexit
+import pickle
 import numpy as np
 import pandas as pd
 from src.nantools.create_nan_patterns import create_nan_patterns
@@ -14,9 +15,8 @@ from src.nantools.create_nan_patterns import create_nan_patterns
 # ==================================================================================
 class MemoryMappedDF:
     
-    
     # ------------------------------------------------------------------------------
-    # The init function creates a new memory mapped dataframe.
+    # The main init function creates a new memory mapped dataframe.
     # ------------------------------------------------------------------------------
     #
     # It takes the inputs:
@@ -362,6 +362,38 @@ class MemoryMappedDF:
             
             # Return selected rows for group variables
             return(self[row_slice,var_names])
-            
-
         
+          
+    # ------------------------------------------------------------------------------
+    # Save to file
+    # ------------------------------------------------------------------------------
+    def save(self, fname):
+        
+        # Get the directory from the filename
+        directory = os.path.dirname(fname)
+        
+        # Create the directory for memory-mapped files if it doesn't exist
+        if not os.path.exists(directory):
+            
+            # Make the directory
+            os.makedirs(directory)
+            
+        # Loop through self.memory_maps copying each memory map file to the new 
+        # directory
+        for dtype, memmap_file in self.memory_maps.items():
+            filename = os.path.join(directory, f"{fname}_{dtype}.dat")
+            np.memmap(filename, dtype=self.data_types[dtype], mode='w+', shape=memmap_file.shape)[:] = memmap_file[:]
+        
+        # Make a copy of self and change self_copy.memory_maps to the new filenames
+        self_copy = self.__class__(pd.DataFrame())
+        self_copy.memory_maps = {dtype: os.path.join(directory, f"{fname}_{dtype}.dat") for dtype in self.memory_maps}
+        self_copy.column_headers = self.column_headers
+        self_copy.data_types = self.data_types
+        self_copy.shape = self.shape
+        self_copy.index = self.index
+        self_copy.columns = self.columns
+        self_copy.dtypes = self.dtypes
+        
+        # Save copy
+        with open(fname, 'wb') as f:
+            pickle.dump(self_copy, f)

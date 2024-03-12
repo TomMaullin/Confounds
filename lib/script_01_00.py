@@ -9,7 +9,7 @@ from src.nets.nets_inverse_normal import nets_inverse_normal
 from src.preproc.datenum import datenum
 from src.preproc.days_in_year import days_in_year
 
-from src.memmap import MemoryMappedDF
+from src.memmap.MemoryMappedDF import MemoryMappedDF
 
 
 def generate_initial_variables(data_dir, out_dir):

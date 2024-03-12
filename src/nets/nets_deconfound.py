@@ -22,6 +22,7 @@ from src.nets.nets_demean import nets_demean
 #                   is not recommended as it is less robust to ill-conditioned
 #                   matrices.
 #  - demean (boolean): If true, y and conf is demeaned.
+#  - dtype: Output datatype (default np.float32)
 #   
 # --------------------------------------------------------------------------
 #
@@ -29,7 +30,7 @@ from src.nets.nets_demean import nets_demean
 #  - np.array: Deconfounded y.
 #     
 # ==========================================================================
-def nets_deconfound(y, conf, mode='svd', demean=True):
+def nets_deconfound(y, conf, mode='svd', demean=True, dtype=np.float32):
     
     # Save original index
     original_index = y.index
@@ -164,7 +165,7 @@ def nets_deconfound(y, conf, mode='svd', demean=True):
     y_deconf = y_deconf.dropna(axis=1, how='all')
     
     # Restore the nan rows
-    deconf_out = pd.DataFrame(index=original_index,columns=y_deconf.columns)
+    deconf_out = pd.DataFrame(index=original_index,columns=y_deconf.columns,dtype=dtype)
     deconf_out[conf_non_nan_inds] = y_deconf.values
     
     # Return result

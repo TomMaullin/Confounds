@@ -9,7 +9,7 @@ from src.nets.nets_normalise import nets_normalise
 from src.duplicate.duplicate_categorical import duplicate_categorical
 from src.duplicate.duplicate_demedian_norm_by_site import duplicate_demedian_norm_by_site
 
-from src.memmap import MemoryMappedDF
+from src.memmap.MemoryMappedDF import MemoryMappedDF
 
 
 def generate_raw_confounds(data_dir, sub_ids):
