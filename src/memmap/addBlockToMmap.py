@@ -22,8 +22,6 @@ import numpy as np
 # ============================================================================
 def addBlockToMmap(fname, block, blockInds,dim,dtype=np.float32):
     
-    print('block: ', block)
-    
     # Check if file is in use
     fileLocked = True
     while fileLocked:

@@ -93,6 +93,9 @@ def generate_initial_variables(data_dir, out_dir):
     # Convert scan date to "decimal" years
     dates = [datenum(int(y), int(m), int(d)) for y, m, d in zip(time_stamp_y, time_stamp_m, time_stamp_d)]
     days_since_year_start = np.array([(date - datenum(int(y), 1, 1)) for date, y in zip(dates, time_stamp_y)])
+
+    # Output decimal years (note we need change datatype for compatibility
+    fmrib_info = fmrib_info.astype({1: 'float32'})
     fmrib_info.iloc[:, 0] = time_stamp_y + days_since_year_start / days_in_year(time_stamp_y)
 
     # Calculate the discrete and continuous scan date (that is scan date given to the nearest day vs

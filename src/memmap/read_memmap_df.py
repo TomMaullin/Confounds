@@ -8,7 +8,7 @@ from src.memmap.MemoryMappedDF import MemoryMappedDF
 # ------------------------------------------------------------------------------
 # Function to read a MemoryMappedDF instance from a file
 # ------------------------------------------------------------------------------
-def read_memmap_df(filename):
+def read_memmap_df(filename, mode='r+'):
     
     # Read in self_copy and create a new instance
     with open(filename, 'rb') as f:
@@ -17,6 +17,9 @@ def read_memmap_df(filename):
     
     # Create a new hash
     self_copy.hash = str(uuid.uuid4())
+
+    # Save the mode
+    self_copy.mode = mode
     
     # Check output directory exists
     if not os.path.exists(self_copy.directory):
@@ -48,7 +51,7 @@ def read_memmap_df(filename):
         # Create new memory map
         self_copy.memory_maps[dtype]= np.memmap(filename, 
                                                 dtype=self_copy.data_types[dtype], 
-                                                mode='r+', 
+                                                mode=mode, 
                                                 shape=memmap_shape)
     
     # Return the new instance

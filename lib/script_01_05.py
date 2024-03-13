@@ -6,6 +6,7 @@ from scipy.stats import t
 from scipy.linalg import pinv, lstsq  
 from src.nets.nets_demean import nets_demean
 from src.nets.nets_pearson import nets_pearson
+from src.memmap.read_memmap_df import read_memmap_df
 from src.nets.nets_load_match import nets_load_match
 from src.memmap.addBlockToMmap import addBlockToMmap
 
@@ -18,25 +19,23 @@ from src.memmap.addBlockToMmap import addBlockToMmap
 # 
 # It takes the following inputs:
 #
-#     IDP_index (int): The index of the IDP to be analyzed.
+#  - data_dir (string): The directory containing the data.
+#  - out_dir (string): The directory to output results to.
+#  - IDP_index (int): The index of the IDP to be analyzed.
+#  - nonlinear_confounds (str): Filename for memory mapped nonlinear confounds.
+#  - IDPs_deconf (str): Filename for memory mapped deconfounded IDPs.
 #
 # -----------------------------------------------------------------------------
 #
-# And returns the following:
-#
-#     veu (numpy.ndarray): An array of variance explained by the confound for
-#                          each non-linear confound.
-#     p (numpy.ndarray): An array of p-values for the F-test of each non-linear
-#                        confound.
-#     veu2 (numpy.ndarray): An array of variance explained by the confound using
-#                           the least squares method.
-#     p2 (numpy.ndarray): An array of p-values from the least squares method.
-#     veu3 (numpy.ndarray): An array of variance explained by the confound using
-#                           Pearson correlation.
-#     p3 (numpy.ndarray): An array of p-values from the Pearson correlation.
+# It saves all p-value results to files named p*.npy and variance explained 
+# values to ve*.npy.
 #
 # =============================================================================
 def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_deconf):
+
+    # Convert files to memorymapped dataframes
+    nonlinear_confounds = read_memmap_df(nonlinear_confounds, mode='r')
+    IDPs_deconf = read_memmap_df(IDPs_deconf, mode='r')
 
     # Get the subject ids
     sub_ids = IDPs_deconf.index
@@ -216,6 +215,12 @@ def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds
     # Indices for where to add to memmap
     indices = np.ix_([IDP_index],np.arange(num_conf_nonlin))
     
-    # Add p values to memory map
-    print(p1_mmap)
+    # Add p values to memory maps
     addBlockToMmap(p1_mmap, p1, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    addBlockToMmap(p2_mmap, p2, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    addBlockToMmap(p3_mmap, p3, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    
+    # Add explained variance values to memory maps
+    addBlockToMmap(ve1_mmap, ve1, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    addBlockToMmap(ve2_mmap, ve2, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    addBlockToMmap(ve3_mmap, ve3, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)

@@ -2,6 +2,7 @@ import os
 import uuid
 import atexit
 import pickle
+import fnmatch
 import numpy as np
 import pandas as pd
 from src.nantools.create_nan_patterns import create_nan_patterns
@@ -36,6 +37,7 @@ class MemoryMappedDF:
         self.data_types = {}
         self.shape = dataframe.shape
         self.type = 'Memory Mapped DataFrame'
+        self.mode = 'r+'
         
         # Work out the NaN patterns for the dataframe
         if get_nan_patterns:
@@ -362,7 +364,16 @@ class MemoryMappedDF:
             
             # Return selected rows for group variables
             return(self[row_slice,var_names])
-        
+
+    # ------------------------------------------------------------------------------
+    # Search columns with a unix style regular expression
+    # ------------------------------------------------------------------------------
+    def search_cols(self, reg_exp):
+
+        # List to hold matches
+        matched_strings = [item for item in self.columns if fnmatch.fnmatch(item, reg_exp)]
+
+        return(self[:,matched_strings])
           
     # ------------------------------------------------------------------------------
     # Save to file
@@ -389,10 +400,13 @@ class MemoryMappedDF:
         self_copy.memory_maps = {dtype: os.path.join(directory, f"{fname}_{dtype}.dat") for dtype in self.memory_maps}
         self_copy.column_headers = self.column_headers
         self_copy.data_types = self.data_types
+        self_copy.directory = self.directory
         self_copy.shape = self.shape
         self_copy.index = self.index
         self_copy.columns = self.columns
+        self_copy.groups = self.groups
         self_copy.dtypes = self.dtypes
+        self_copy.type = self.type
         
         # Save copy
         with open(fname, 'wb') as f:

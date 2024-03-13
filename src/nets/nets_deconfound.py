@@ -43,7 +43,7 @@ def nets_deconfound(y, conf, mode='svd', demean=True, dtype=np.float32):
     y = y[conf_non_nan_inds]
     
     # Initialize empty nan dataframe
-    y_deconf = pd.DataFrame(index=y.index)
+    y_deconf = pd.DataFrame(index=y.index,dtype='float32')
 
     # If we are demeaning
     if demean:
@@ -166,7 +166,7 @@ def nets_deconfound(y, conf, mode='svd', demean=True, dtype=np.float32):
     
     # Restore the nan rows
     deconf_out = pd.DataFrame(index=original_index,columns=y_deconf.columns,dtype=dtype)
-    deconf_out[conf_non_nan_inds] = y_deconf.values
+    deconf_out[conf_non_nan_inds] = np.array(y_deconf.values,dtype='float32')
     
     # Return result
     return(deconf_out)
