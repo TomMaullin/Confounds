@@ -130,7 +130,7 @@ def generate_initial_variables(data_dir, out_dir):
     
     # Read in partial correlation network IDPs
     net_25 = nets_load_match(os.path.join(data_dir, 'rfMRI_d25_partialcorr_v1.txt'), sub_ids, dtypes=dtypes)
-    net_100 = pd.DataFrame(np.random.randn(67470, 1485)) # nets_load_match(os.path.join(data_dir, 'rfMRI_d100_partialcorr_v1.txt'), sub_ids)
+    net_100 = nets_load_match(os.path.join(data_dir, 'rfMRI_d100_partialcorr_v1.txt'), sub_ids, dtypes=dtypes)
     
     
     # ----------------------------------------------------------------------------------
@@ -355,7 +355,7 @@ def generate_initial_variables(data_dir, out_dir):
         'ID': sub_ids,
         'AGE': age,
         'SEX': sex,
-        'HEADSIZE': np.where(np.isnan(all_IDPs.iloc[:, 2]), np.nan, all_IDPs.iloc[:, 2]),
+        'HEADSIZE': np.where(np.isnan(all_IDPs.iloc[:, 17]), np.nan, all_IDPs.iloc[:, 16]),
         'TOD': day_fraction,
         'FST2': FS_use_T2
     })

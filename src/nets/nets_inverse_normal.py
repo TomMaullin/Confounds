@@ -86,7 +86,7 @@ def nets_inverse_normal(data, constant=None, method=None, is_quantitative=False,
     rows = data.index
             
     # Transform data to a numpy array for manipulation
-    data = np.array(data)
+    data = np.array(data, dtype=np.float64)
 
     # Check if the data is quantitative
     if is_quantitative:

@@ -55,17 +55,18 @@ class MemoryMappedDF:
         # Iterate through each column to determine if dtype changes are needed
         for column in dataframe.columns:
             
-            # Reduce float64s to float32s
-            if dataframe[column].dtype == np.float64:
-                dtypes[column] = np.float32
+            # # Reduce float64s to float32s
+            # if dataframe[column].dtype == np.float64:
+            #     dtypes[column] = np.float32
                 
-            # Reduce int64s to int32s
-            elif dataframe[column].dtype == np.int64:
-                dtypes[column] = np.int32
+            # # Reduce int64s to int32s
+            # elif dataframe[column].dtype == np.int64:
+            #     dtypes[column] = np.int32
                 
-            else:
-                # For other dtypes, keep them as they are
-                dtypes[column] = dataframe[column].dtype
+            # else:
+            
+            # For other dtypes, keep them as they are
+            dtypes[column] = dataframe[column].dtype
 
         # Apply the dtype changes to the DataFrame
         dataframe = dataframe.astype(dtypes)
