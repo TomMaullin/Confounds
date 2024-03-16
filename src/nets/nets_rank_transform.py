@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy.special import ndtri
+from src.nets.nets_unique import nets_unique
 
 # ==========================================================================
 #
@@ -27,7 +28,7 @@ def nets_rank_transform(data, constant):
     data = data.flatten()
 
     # Get the unique values and argsort of the data
-    unique_vals, inverse, counts, perm = unique_plus(data, return_inverse=True,
+    unique_vals, inverse, counts, perm = nets_unique(data, return_inverse=True,
                                                      return_counts=True, 
                                                      return_perm=True)
     
@@ -57,46 +58,3 @@ def nets_rank_transform(data, constant):
     # Reshape and return transformed data
     return(transformed_data.reshape(data_shape))
 
-
-
-# ==========================================================================
-#
-# The below function is identical to the source code for numpy unique, with
-# one exception; it also allows the return of the permutation from argsort.
-# This is useful as it cuts computation time in half when both argsort and
-# unique must be run on the same array.
-#
-# ==========================================================================
-def unique_plus(ar, return_index=False, return_inverse=False,
-                return_counts=False, return_perm=False):
-    """
-    Find the unique elements of an array, ignoring shape.
-    """
-    ar = np.asanyarray(ar).flatten()
-
-    optional_indices = return_index or return_inverse
-
-    if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
-        aux = ar[perm]
-    else:
-        ar.sort()
-        aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool_)
-    mask[:1] = True
-    mask[1:] = aux[1:] != aux[:-1]
-
-    ret = (aux[mask],)
-    if return_index:
-        ret += (perm[mask],)
-    if return_inverse:
-        imask = np.cumsum(mask) - 1
-        inv_idx = np.empty(mask.shape, dtype=np.intp)
-        inv_idx[perm] = imask
-        ret += (inv_idx,)
-    if return_counts:
-        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
-        ret += (np.diff(idx),)
-    if return_perm:
-        ret += (perm,)
-    return ret
