@@ -2,6 +2,7 @@ import os
 import uuid
 import atexit
 import pickle
+import shutil
 import fnmatch
 import numpy as np
 import pandas as pd
@@ -22,7 +23,14 @@ class MemoryMappedDF:
     #
     # It takes the inputs:
     #
-    #  - dataframe: The dataframe to store in memory mapped format.
+    #  - dataframe: The dataframe to store in memory mapped format. At present the 
+    #               dataframes may include columns of any numeric type, and string
+    #               columns,constructed via something like:
+    #
+    #                            df[columns] = df[columns].astype("string")
+    #
+    #               String nans are stored as b'<na>' and converted back on read.
+    #
     #  - directory: The directory to store the internal memory map.
     #  - get_nan_patterns: If true, the object will store a dictionary containing 
     #                      the unique patterns of nan values in the columns.
@@ -32,7 +40,7 @@ class MemoryMappedDF:
         
         # Initialize dictionaries to hold memory maps, column headers, and data types
         self.memory_maps = {}
-        self.directory = directory
+        self.directory = os.path.join(os.getcwd(),directory)
         self.column_headers = {}
         self.data_types = {}
         self.shape = dataframe.shape
@@ -84,27 +92,45 @@ class MemoryMappedDF:
             # Make the directory
             os.makedirs(self.directory)
         
-        # Group dataframe columns by their data types
-        dtype_groups = dataframe.columns.to_series().groupby(dataframe.dtypes).groups
+        # Group unique data types
+        data_types = dataframe.dtypes.unique()
         
         # Iterate over each data type group
-        for dtype, columns in dtype_groups.items():
+        for dtype in data_types:
+
+            # Get the corresponding columns
+            columns = dataframe.dtypes[dataframe.dtypes == dtype].index
             
             # Create a subset dataframe for the current data type
             df_subset = dataframe[columns]
+
+            # If we have a string datatype, numpy memmaps require us to specify
+            # the dtype in terms of the length of the string
+            if dtype == 'string[python]':
+            
+                # Get the maximum length of a string
+                str_len = max([df_subset[col].str.len().max() for col in df_subset.columns])
+            
+                # Output datatype 
+                dtype_out = "S" + str(str_len)
+            
+            else:
+            
+                # Output datatype
+                dtype_out = dtype.type
             
             # Convert the subset dataframe to a numpy array
-            array = df_subset.to_numpy(dtype=dtype.type)
+            array = df_subset.to_numpy(dtype=dtype_out)
             
             # Store column headers and data types for each dtype
             self.column_headers[dtype.name] = df_subset.columns.tolist()
-            self.data_types[dtype.name] = dtype.type
+            self.data_types[dtype.name] = dtype_out
             
             # Create a filename for the memory-mapped file
             filename = os.path.join(self.directory, f"{self.hash}_{dtype.name}.dat")
             
             # Create and initialize the memory-mapped file
-            memmap_file = np.memmap(filename, dtype=dtype.type, mode='w+', shape=array.shape)
+            memmap_file = np.memmap(filename, dtype=dtype_out, mode='w+', shape=array.shape)
             memmap_file[:] = array[:]
             
             # Flush changes to ensure they are written to disk
@@ -247,6 +273,26 @@ class MemoryMappedDF:
         # Reorder the DataFrame columns to match the original order
         reordering = [column for column in self.columns if column in df.columns]
         df = df[reordering]
+
+        # Check if we have any string columns
+        if 'string' in self.column_headers:
+
+            # Get the string columns
+            dtype_columns = self.column_headers['string']
+
+            # Intersect this list with the columns we have
+            dtype_columns = set(dtype_columns).intersection(set(df.columns))
+            dtype_columns = list(dtype_columns)
+
+            # If we have any string columns in the dataframe itself,
+            # we need to convert
+            if len(dtype_columns)>0:
+
+                # Convert columns back to string
+                df[dtype_columns]=df[dtype_columns].astype('string')
+
+                # Replace string NAs with NAN values.
+                df = df.replace('<NA>',pd.NA)
                 
         # Return result
         return(df)
@@ -393,9 +439,13 @@ class MemoryMappedDF:
         # Loop through self.memory_maps copying each memory map file to the new 
         # directory
         for dtype, memmap_file in self.memory_maps.items():
+
+            # Create new filename
             filename = os.path.join(directory, f"{fname}_{dtype}.dat")
-            np.memmap(filename, dtype=self.data_types[dtype], mode='w+', shape=memmap_file.shape)[:] = memmap_file[:]
-        
+                    
+            # Copy memmap file to new filename
+            shutil.copy(memmap_file.filename, filename)
+            
         # Make a copy of self and change self_copy.memory_maps to the new filenames
         self_copy = self.__class__(pd.DataFrame())
         self_copy.memory_maps = {dtype: os.path.join(directory, f"{fname}_{dtype}.dat") for dtype in self.memory_maps}

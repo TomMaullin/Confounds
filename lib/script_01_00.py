@@ -40,7 +40,7 @@ def generate_initial_variables(data_dir, out_dir):
     # ----------------------------------------------------------------------------------
 
     # dtypes for IDPs
-    dtypes = {i: 'float32' for i in range(893)}
+    dtypes = {i: 'float64' for i in range(893)}
     dtypes[0] = 'int32'
     dtypes[892] = 'int32'
     
@@ -66,7 +66,7 @@ def generate_initial_variables(data_dir, out_dir):
     # ----------------------------------------------------------------------------------
 
     # dtypes for fmrib info
-    dtypes = {i: 'float32' for i in range(6)}
+    dtypes = {i: 'float64' for i in range(6)}
     dtypes[0] = 'int32'
     dtypes[1] = 'int32'
     dtypes[4] = 'int32'
@@ -95,7 +95,7 @@ def generate_initial_variables(data_dir, out_dir):
     days_since_year_start = np.array([(date - datenum(int(y), 1, 1)) for date, y in zip(dates, time_stamp_y)])
 
     # Output decimal years (note we need change datatype for compatibility
-    fmrib_info = fmrib_info.astype({1: 'float32'})
+    fmrib_info = fmrib_info.astype({1: 'float64'})
     fmrib_info.iloc[:, 0] = time_stamp_y + days_since_year_start / days_in_year(time_stamp_y)
 
     # Calculate the discrete and continuous scan date (that is scan date given to the nearest day vs
@@ -113,11 +113,11 @@ def generate_initial_variables(data_dir, out_dir):
     # ----------------------------------------------------------------------------------
 
     # dtypes for noise 25
-    dtypes = {i: 'float32' for i in range(22)}
+    dtypes = {i: 'float64' for i in range(22)}
     dtypes[0] = 'int32'
     
     # dtypes for noise 100
-    dtypes = {i: 'float32' for i in range(56)}
+    dtypes = {i: 'float64' for i in range(56)}
     dtypes[0] = 'int32'
     
     # Read in node amplitudes
@@ -125,7 +125,7 @@ def generate_initial_variables(data_dir, out_dir):
     node_amps_100 = nets_load_match(os.path.join(data_dir, 'rfMRI_d100_NodeAmplitudes_v1.txt'), sub_ids, dtypes=dtypes)
 
     # dtypes for noise 100
-    dtypes = {i: 'float32' for i in range(211)}
+    dtypes = {i: 'float64' for i in range(211)}
     dtypes[0] = 'int32'
     
     # Read in partial correlation network IDPs
@@ -137,7 +137,7 @@ def generate_initial_variables(data_dir, out_dir):
     # Read in FS IDPs
     # ----------------------------------------------------------------------------------
     # dtypes for FS
-    dtypes = {i: 'float32' for i in range(1274)}
+    dtypes = {i: 'float64' for i in range(1274)}
     dtypes[0] = 'int32'
     
     FS = nets_load_match(os.path.join(data_dir, 'FS_IDPs.txt'), sub_ids, dtypes=dtypes)
@@ -149,7 +149,7 @@ def generate_initial_variables(data_dir, out_dir):
     # Read in ASL IDPs
     # ----------------------------------------------------------------------------------
     # dtypes for ASL
-    dtypes = {i: 'float32' for i in range(51)}
+    dtypes = {i: 'float64' for i in range(51)}
     dtypes[0] = 'int32'
     
     ASL = nets_load_match(os.path.join(data_dir, 'ASL_IDPs.txt'), sub_ids, dtypes=dtypes)
@@ -158,7 +158,7 @@ def generate_initial_variables(data_dir, out_dir):
     # Read in QSM IDPs
     # ----------------------------------------------------------------------------------
     # dtypes for QSM
-    dtypes = {i: 'float32' for i in range(19)}
+    dtypes = {i: 'float64' for i in range(19)}
     dtypes[0] = 'int32'
     
     QSM = nets_load_match(os.path.join(data_dir, 'QSM_IDPs.txt'), sub_ids, dtypes=dtypes)
@@ -168,7 +168,7 @@ def generate_initial_variables(data_dir, out_dir):
     # Read in WMH 
     # ----------------------------------------------------------------------------------
     # dtypes for QSM
-    dtypes = {i: 'float32' for i in range(3)}
+    dtypes = {i: 'float64' for i in range(3)}
     dtypes[0] = 'int32'
     
     WMH = nets_load_match(os.path.join(data_dir, 'ID_WMH.txt'), sub_ids, dtypes=dtypes)
@@ -320,7 +320,7 @@ def generate_initial_variables(data_dir, out_dir):
         gen_names = [line.strip() for line in file]
 
     # Datatypes for this file (general variables have a mix so best specify)
-    dtypes = {0: 'int32', 1: 'float32', 2: 'float32', 3: 'float32', 4: 'object', 5: 'object', 6: 'object', 7: 'object'}
+    dtypes = {0: 'int32', 1: 'float64', 2: 'float64', 3: 'float64', 4: 'object', 5: 'object', 6: 'object', 7: 'object'}
 
     # General variables
     gen_vars = nets_load_match(os.path.join(data_dir, 'ID_OTHER_GENERAL.txt'), sub_ids, dtypes=dtypes)
@@ -396,11 +396,11 @@ def generate_initial_variables(data_dir, out_dir):
     os.makedirs(workspaces_dir, exist_ok=True)
 
     # Datatypes for ed
-    dtypes = {0: 'int32', 1: 'float32', 2: 'float32', 3: 'float32', 4: 'object'}
+    dtypes = {0: 'int32', 1: 'float64', 2: 'float64', 3: 'float64', 4: 'object'}
     ed = nets_load_match(os.path.join(data_dir, 'ID_EDDYQC.txt'), sub_ids, dtypes=dtypes)
     
     # Datatypes for ta
-    dtypes = {0: 'int32', 1: 'float32', 2: 'float32', 3: 'float32'}
+    dtypes = {0: 'int32', 1: 'float64', 2: 'float64', 3: 'float64'}
     ta = nets_load_match(os.path.join(data_dir, 'ID_TABLEPOS.txt'), sub_ids, dtypes=dtypes)
     
     
@@ -437,6 +437,12 @@ def generate_initial_variables(data_dir, out_dir):
     # Set column names
     misc.columns = gen_names[1:]
     misc.index = sub_ids
+
+    # Convert string columns to appropriate type
+    object_cols = misc.select_dtypes(include=['object']).columns
+    
+    # Convert the object columns to string
+    misc[object_cols] = misc[object_cols].astype("string")
     
     # ----------------------------------------------------------------------------------
     # Output memmaps
