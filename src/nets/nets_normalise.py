@@ -134,7 +134,7 @@ def nets_normalise(x, constant=np.NaN, mode='preserve'):
         x_cols = x_cols - np.nanmean(x_cols, axis=0, keepdims=True)
 
         # Scale to unit variance (standard deviation = 1)
-        std = np.nanstd(x_cols, axis=0, ddof=0, keepdims=True)
+        std = np.nanstd(x_cols, axis=0, ddof=1, keepdims=True)
         x[:,cols_to_demean] = x_cols / std
         
     # Reshape back to original shape

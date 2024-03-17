@@ -166,7 +166,9 @@ def duplicate_categorical_deprecated(conf_name, ids, subject_indices_by_site, da
 # - ids (npy array): Numpy array of subject IDs
 # - subject_indices_by_site (list of numpy arrays): The j^th numpy array
 #           contains a list of subject ids for the subjects in site j.
-# - data_dir (str): Data directory
+# - data_dir (str): Data directory.
+# - preserve_nans (bool): Boolean indicating whether we should preserve the
+#                         nan values in the original array (default: False)
 #
 # --------------------------------------------------------------------------
 #
@@ -177,7 +179,7 @@ def duplicate_categorical_deprecated(conf_name, ids, subject_indices_by_site, da
 # - confs_out (pd Dataframe): The new confound matrix.
 #
 # ==========================================================================
-def duplicate_categorical(conf_name, ids, subject_indices_by_site, data_dir):
+def duplicate_categorical(conf_name, ids, subject_indices_by_site, data_dir, preserve_nans=False):
     
     # Get the names of the confounds
     names_file = os.path.join(data_dir, '..', 'NAMES_confounds',f'{conf_name}.txt')
@@ -235,7 +237,7 @@ def duplicate_categorical(conf_name, ids, subject_indices_by_site, data_dir):
 
                 # Normalize 
                 dummies = dummies.replace(0, np.nan)
-                dummies = (dummies - np.nanmean(dummies, axis=0)) / np.nanstd(dummies, axis=0)
+                dummies = (dummies - np.nanmean(dummies, axis=0)) / np.nanstd(dummies, axis=0, ddof=1)
                 dummies = dummies.fillna(0)
 
                 # Create new confound names
@@ -248,10 +250,14 @@ def duplicate_categorical(conf_name, ids, subject_indices_by_site, data_dir):
                 n_dummies = dummies.shape[1]
 
                 # Merge or concatenate the new columns to the final DataFrame
-                confs_out = confs_out.join(dummies, how='outer').fillna(0)
+                confs_out = confs_out.join(dummies, how='outer')
+
+                # Replace the nans introduced by the join for indices representing other sites
+                confs_out.iloc[:,-n_dummies:] = confs_out.iloc[:,-n_dummies:].fillna(0)
                 
-                # Retain the original nan values
-                confs_out.iloc[original_nans,-n_dummies:] = np.nan
+                # Reintroduce the original nan values
+                if preserve_nans:
+                    confs_out.iloc[original_nans,-n_dummies:] = np.nan
                 
 
     # Return the final confounds

@@ -408,8 +408,9 @@ def generate_initial_variables(data_dir, out_dir):
     # Sort data
     # ----------------------------------------------------------------------------------
 
-    # Sort scan_date and get the sorted indices
-    index_sorted_date = np.argsort(scan_date)
+    # Sort scan_date and get the sorted indices (we use a lexsort to consistently handle
+    # tied elements)
+    index_sorted_date = pd.Series(np.lexsort((np.arange(len(scan_date)),scan_date.values)))
     sorted_date = scan_date.iloc[index_sorted_date]
     
     # Sort IDPs

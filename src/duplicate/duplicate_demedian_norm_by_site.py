@@ -21,7 +21,9 @@ from src.nets.nets_load_match import nets_load_match
 # - ids (npy array): Numpy array of subject IDs
 # - subject_indices_by_site (list of numpy arrays): The j^th numpy array
 #           contains a list of subject ids for the subjects in site j.
-# - data_dir (str): Data directory
+# - data_dir (str): Data directory.
+# - preserve_nans (bool): Boolean indicating whether we should preserve the
+#                         nan values in the original array (default: False)
 #
 # --------------------------------------------------------------------------
 #
@@ -32,7 +34,7 @@ from src.nets.nets_load_match import nets_load_match
 # - confs_out (pd Dataframe): The new confound matrix.
 #
 # ==========================================================================
-def duplicate_demedian_norm_by_site(conf_name, ids, subject_indices_by_site, data_dir):
+def duplicate_demedian_norm_by_site(conf_name, ids, subject_indices_by_site, data_dir, preserve_nans=False):
 
     # Construct file names
     names_file =  os.path.join(data_dir, '..', 'NAMES_confounds', f'{conf_name}.txt')
@@ -104,7 +106,7 @@ def duplicate_demedian_norm_by_site(conf_name, ids, subject_indices_by_site, dat
         values_at_site = values_at_site.where(values_at_site >= -8, np.nan)
 
         # Fill the na values with the appropriate medians
-        values_at_site.fillna(medians_site)
+        values_at_site = values_at_site.fillna(medians_site)
 
         # ------------------------------------------------------------------------
         # Normalise the dataframe, ignoring zeros
@@ -131,9 +133,10 @@ def duplicate_demedian_norm_by_site(conf_name, ids, subject_indices_by_site, dat
             confs_out = confs_out.join(values_at_site, how='outer')
             
         # Reinsert original nans
-        temporary_nan_copy = confs_out.iloc[:,-num_vars:].copy()
-        temporary_nan_copy.iloc[original_nans.values] = np.nan
-        confs_out.iloc[:,-num_vars:] = temporary_nan_copy
-            
+        if preserve_nans:
+            temporary_nan_copy = confs_out.iloc[:,-num_vars:].copy()
+            temporary_nan_copy.iloc[original_nans.values] = np.nan
+            confs_out.iloc[:,-num_vars:] = temporary_nan_copy
+                
     # Return the confounds
     return(confs_out)
