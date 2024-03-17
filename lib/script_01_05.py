@@ -30,6 +30,12 @@ from src.memmap.addBlockToMmap import addBlockToMmap
 # It saves all p-value results to files named p*.npy and variance explained 
 # values to ve*.npy.
 #
+# -----------------------------------------------------------------------------
+#
+# Developer's note: This file does not correspond to the bash script named
+# script_01_05_gen_nonlin_conf.sh in the matlab repo. Instead, it corresponds
+# to the matlab function func_01_05_gen_nonlin_conf.m.
+#
 # =============================================================================
 def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_deconf):
 
