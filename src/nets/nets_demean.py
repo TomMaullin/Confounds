@@ -16,6 +16,7 @@ import pandas as pd
 # Returns:
 #  - x (pandas df): Demeaned array with mean removed and scaled to unit
 #                   variance.
+#  - 
 #     
 # ==========================================================================
 def nets_demean(x):

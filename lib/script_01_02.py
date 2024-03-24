@@ -3,6 +3,8 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from src.preproc.switch_type import switch_type
+
 from src.nets.nets_load_match import nets_load_match
 from src.nets.nets_normalise import nets_normalise
 from src.nets.nets_inverse_normal import nets_inverse_normal
@@ -13,6 +15,10 @@ from src.preproc.filter_columns_by_site import filter_columns_by_site
 from src.memmap.MemoryMappedDF import MemoryMappedDF
 
 def generate_nonlin_confounds(data_dir, all_conf, IDPs):
+
+    # Convert input to memory mapped dataframes if it isn't already
+    all_conf = switch_type(all_conf, out_type='MemoryMappedDF')
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
 
     # Confound groups we are interested in.
     conf_name = ['AGE', 'AGE_SEX', 'HEAD_SIZE',  'TE', 'STRUCT_MOTION', 
@@ -132,7 +138,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
     conf_nonlin = MemoryMappedDF(conf_nonlin)
         
     # Deconfound IDPs
-    IDPs_deconf = nets_deconfound(IDPs[:,:], all_conf[:,:], 'svd')
+    IDPs_deconf = nets_deconfound(IDPs[:,:], all_conf[:,:], 'nets_svd', conf_has_nans=False)
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)
