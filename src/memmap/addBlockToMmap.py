@@ -20,7 +20,7 @@ import numpy as np
 # - `dtype` (optional): Data type of output, by default float32
 #
 # ============================================================================
-def addBlockToMmap(fname, block, blockInds,dim,dtype=np.float32):
+def addBlockToMmap(fname, block, blockInds, dim, dtype=np.float64):
     
     # Check if file is in use
     fileLocked = True

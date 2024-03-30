@@ -14,8 +14,32 @@ from src.preproc.filter_columns_by_site import filter_columns_by_site
 
 from src.memmap.MemoryMappedDF import MemoryMappedDF
 
-def generate_nonlin_confounds(data_dir, all_conf, IDPs):
-
+# =============================================================================
+#
+# This function deconfounded IDPs and the nonlinear confounds.
+#
+# -----------------------------------------------------------------------------
+# 
+# It takes the following inputs:
+#
+#  - data_dir (string): The directory containing the data.
+#  - all_conf (string or MemoryMappedDF): The memory mapped confounds.
+#  - IDPs (string or MemoryMappedDF): The memory mapped IDPs.
+#  - cluster_cfg (dict): Cluster configuration dictionary containing the type
+#                        of cluster we want to run (e.g. 'local', 'slurm', 
+#                        'sge',... etc) and the number of nodes we want to run 
+#                        on (e.g. '12').
+#
+# -----------------------------------------------------------------------------
+#
+# It returns:
+#
+#  - conf_nonlin (MemoryMappedDF): Memory mapped nonlinear confounds.
+#  - IDPs_deconf (MemoryMappedDF): Memory mapped deconfounded IDPs
+#
+# =============================================================================
+def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
+    
     # Convert input to memory mapped dataframes if it isn't already
     all_conf = switch_type(all_conf, out_type='MemoryMappedDF')
     IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
@@ -39,7 +63,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
 
     # Initialize indSite as a list to hold the indices
     inds_per_site = []
-
+    
     # Loop over each value in site ids
     for site_id in unique_site_ids:
 
@@ -71,6 +95,9 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
         # Get all the confounds at the site
         all_conf_site = all_conf[:,:].iloc[site_indices, :]
 
+        # Get index
+        site_index = all_conf_site.index
+
         # Get conf_group_site squared
         conf_group_site_squared = nets_normalise(conf_group_site**2)
         conf_group_site_squared.columns = [f"{col}_squared" for col in conf_group_site_squared.columns]
@@ -87,6 +114,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
         conf_group_site_nonlin = pd.concat([conf_group_site_squared,
                                             conf_group_site_inormal,
                                             conf_group_site_squared_inormal], axis=1)
+        conf_group_site_nonlin.index = site_index
 
         # -------------------------------------------------------
         # Deconfound for this site
@@ -95,7 +123,8 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
         # Perform deconfounding
         conf_nonlin_deconf = nets_deconfound(conf_group_site_nonlin,
                                              all_conf_site,
-                                             'svd')
+                                             'svd', 
+                                             check_nan_patterns=True)
         
         # Reindex the dataframe to fill off-site values with zeros
         conf_nonlin_deconf = conf_nonlin_deconf.reindex(conf_group.index).fillna(0)
@@ -131,17 +160,11 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
     conf_nonlin = conf_nonlin[[*col_names]]
         
     # ---------------------------------------------------------
-    # Create memory maps for output
+    # Create memory map for nonlinear confound output
     # ---------------------------------------------------------
     
     # Create memory mapped df for non linear confounds
     conf_nonlin = MemoryMappedDF(conf_nonlin)
-        
-    # Deconfound IDPs
-    IDPs_deconf = nets_deconfound(IDPs[:,:], all_conf[:,:], 'nets_svd', conf_has_nans=False)
-    
-    # Create memory mapped df for deconfounded IDPs
-    IDPs_deconf = MemoryMappedDF(IDPs_deconf)
     
     # Loop through groups adding names
     for group in conf_name:
@@ -158,5 +181,32 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs):
         # Set the new var_names for conf_nonlin
         conf_nonlin.set_group(group + '_nonlin', new_var_names)
         
+    # ---------------------------------------------------------
+    # Deconfound IDPs
+    # ---------------------------------------------------------
+
+    # Switch type to reduce transfer costs
+    all_conf = switch_type(all_conf, out_type='filename', fname=os.path.join(os.getcwd(),'temp_mmap','conf.dat'))
+    IDPs = switch_type(IDPs, out_type='filename', fname=os.path.join(os.getcwd(),'temp_mmap','IDPs.dat'))
+    
+    # Deconfound IDPs
+    if cluster_cfg is None:
+        
+        # Run nets deconfound and get output
+        IDPs_deconf = nets_deconfound(IDPs, all_conf, 
+                                      'nets_svd', conf_has_nans=False,
+                                      check_nan_patterns=False)
+    
+    else:
+        
+        # Run nets_deconfound
+        IDPs_deconf = nets_deconfound(IDPs, all_conf, 
+                                      'nets_svd', conf_has_nans=False,
+                                      check_nan_patterns=False,
+                                      cluster_cfg=cluster_cfg)
+    
+    # Create memory mapped df for deconfounded IDPs
+    IDPs_deconf = MemoryMappedDF(IDPs_deconf)
+    
     # Return the result
     return(conf_nonlin, IDPs_deconf)

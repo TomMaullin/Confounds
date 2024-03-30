@@ -46,6 +46,10 @@ class MemoryMappedDF:
         self.shape = dataframe.shape
         self.type = 'Memory Mapped DataFrame'
         self.mode = 'r+'
+
+        # We assume by default that we don't want this memory map to stick around 
+        # in our files if we delete it from memory.
+        self.persist = False
         
         # Work out the NaN patterns for the dataframe
         if get_nan_patterns:
@@ -312,25 +316,41 @@ class MemoryMappedDF:
     # memmap folder if needed.
     # ------------------------------------------------------------------------------
     def cleanup(self):
-        
-        # This will be called when the memmap is about to be destroyed
-        for dtype_name in self.data_types:
-        
-            # Get filename for datatype
-            fname_dtype = os.path.join(self.directory, f"{self.hash}_{dtype_name}.dat")
+
+        # If we have decided not to let the data persist in memory
+        if not self.persist:
             
-            # Check if file exists for datatype
-            if os.path.exists(fname_dtype):
+            # This will be called when the memmap is about to be destroyed
+            for dtype_name in self.data_types:
             
-                # Remove the file
-                os.remove(fname_dtype)
+                # Get filename for datatype
+                fname_dtype = os.path.join(self.directory, f"{self.hash}_{dtype_name}.dat")
                 
-        # Check if the output folder is empty
-        if os.listdir(self.directory) == []:
+                # Check if file exists for datatype
+                if os.path.exists(fname_dtype):
+                
+                    # Remove the file
+                    os.remove(fname_dtype)
+                    
+            # Check if the output folder is empty
+            if os.listdir(self.directory) == []:
+                
+                # Folder is empty, delete it
+                os.rmdir(self.directory)
             
-            # Folder is empty, delete it
-            os.rmdir(self.directory)
-            
+    # ------------------------------------------------------------------------------
+    # Running mmap.persist() sets the persist variable to true, which ensures that
+    # the underlying memory map files are not deleted when the memory map is.
+    # ------------------------------------------------------------------------------
+    def persist(self):
+        self.persist = True
+    
+    # ------------------------------------------------------------------------------
+    # Running mmap.unpersist() sets the persist variable to false, which means that
+    # the underlying memory map files will be deleted when the memory map is.
+    # ------------------------------------------------------------------------------
+    def unpersist(self):
+        self.persist = False
         
     # ------------------------------------------------------------------------------
     # The set group function allows us to setup quick access groups of variables. 

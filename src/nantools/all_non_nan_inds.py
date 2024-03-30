@@ -30,8 +30,7 @@ def all_non_nan_inds(x, safeMode=False):
 
     # Assume we can't load all data in at once
     else:
-
-        print('hereeeeee')
+        
         # Create an empty boolean array
         nan_array = np.zeros(x.shape[0], dtype=bool)
 
