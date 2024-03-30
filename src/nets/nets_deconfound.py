@@ -211,7 +211,7 @@ def nets_deconfound(y, conf, mode='nets_svd', demean=True, dtype='float64',
         for i in completed:
             i.result()
             j = j+1
-            print('Deconfounded: ', str(j), '/', len(completed))
+            print('Deconfounded: ' + str(j) + '/' + str(num_patterns))
         
         # Delete the future objects (NOTE: see above comment in setup section).
         del i, completed, futures, future_i
@@ -229,7 +229,6 @@ def nets_deconfound(y, conf, mode='nets_svd', demean=True, dtype='float64',
         
         # Filter out zero columns using the mask
         deconf_out = deconf_out.loc[:, non_zero_cols]
-        print('zero drop executed')
     
     # Otherwise, run in serial
     else:

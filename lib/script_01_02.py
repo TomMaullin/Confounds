@@ -158,6 +158,10 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
 
     # Reorder the columns
     conf_nonlin = conf_nonlin[[*col_names]]
+
+    # Reindex (the rows are no longer in the correct order because we have been subsetting
+    # based on site)
+    conf_nonlin = conf_nonlin.reindex(sub_ids)
         
     # ---------------------------------------------------------
     # Create memory map for nonlinear confound output
@@ -207,6 +211,21 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)
+
+    # ---------------------------------------------------------
+    # Cleanup
+    # ---------------------------------------------------------
+
+    # Remove the temp mmap folder
+    if os.path.exists(os.path.join(os.getcwd(),'temp_mmap')):
+        shutil.rmtree(os.path.join(os.getcwd(),'temp_mmap'))
+
+    # Close the cluster and client
+    client.close()
+    client.shutdown()
+
+    # Delete the objects for good measure
+    del client, cluster
     
     # Return the result
     return(conf_nonlin, IDPs_deconf)
