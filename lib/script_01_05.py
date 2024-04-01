@@ -6,6 +6,7 @@ from scipy.stats import t
 from scipy.linalg import pinv, lstsq  
 from src.nets.nets_demean import nets_demean
 from src.nets.nets_pearson import nets_pearson
+from src.preproc.switch_type import switch_type
 from src.memmap.read_memmap_df import read_memmap_df
 from src.nets.nets_load_match import nets_load_match
 from src.memmap.addBlockToMmap import addBlockToMmap
@@ -20,7 +21,6 @@ from src.memmap.addBlockToMmap import addBlockToMmap
 # It takes the following inputs:
 #
 #  - data_dir (string): The directory containing the data.
-#  - out_dir (string): The directory to output results to.
 #  - IDP_index (int): The index of the IDP to be analyzed.
 #  - nonlinear_confounds (str): Filename for memory mapped nonlinear confounds.
 #  - IDPs_deconf (str): Filename for memory mapped deconfounded IDPs.
@@ -37,11 +37,15 @@ from src.memmap.addBlockToMmap import addBlockToMmap
 # to the matlab function func_01_05_gen_nonlin_conf.m.
 #
 # =============================================================================
-def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_deconf):
+def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_deconf, dtype=np.float64):
 
-    # Convert files to memorymapped dataframes
-    nonlinear_confounds = read_memmap_df(nonlinear_confounds, mode='r')
-    IDPs_deconf = read_memmap_df(IDPs_deconf, mode='r')
+    # --------------------------------------------------------------------------------
+    # Convert to memory mapped df (if not already)
+    # --------------------------------------------------------------------------------
+        
+    # Convert input to memory mapped dataframes if it isn't already
+    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
+    IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
 
     # Get the subject ids
     sub_ids = IDPs_deconf.index
@@ -88,145 +92,159 @@ def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds
         
         # Get the site of the non-linear confound
         site_no = int(nonlinear_confounds.columns[i].split('Site_')[1][0])
+    
+        # Check if we have enough values to perform the comparison
+        if len(inds_per_site[site_no-1])!=0:
+            
+            # Get the nonlinear confound for this site
+            nonlinear_confound = nonlinear_confounds[:,i].values
+            
+            # Subset to just this site (remembering zero indexing)
+            nonlinear_confound = nonlinear_confound[inds_per_site[site_no-1]]
         
-        # Get the nonlinear confound for this site
-        nonlinear_confound = nonlinear_confounds[:,i].values
+            # --------------------------------------------------------
+            # Get X,Y and predicted Y
+            # --------------------------------------------------------
         
-        # Subset to just this site (remembering zero indexing)
-        nonlinear_confound = nonlinear_confound[inds_per_site[site_no-1]]
-
-        # --------------------------------------------------------
-        # Get X,Y and predicted Y
-        # --------------------------------------------------------
-
-        # Demean the confound data for the current site and nonlinear confound
-        X = nets_demean(pd.DataFrame(nonlinear_confound)).values
-
-        # Get Y
-        Y = IDPs_deconf[:, IDP_index].values
-        Y = Y[inds_per_site[site_no-1]]
-
-        # Remove potential nans from X
-        Y = Y[~np.isnan(X)]
-        X = X[~np.isnan(X)]
-
-        # Get predicted Y = Xbeta
-        pred_Y = np.nansum(X*Y)/np.nansum(X**2)*X
-
-        # Compute the residuals
-        resids = Y - pred_Y
-
-        # --------------------------------------------------------
-        # Variance explained version 1
-        # --------------------------------------------------------
-        # Get variance explained by pred_Y
-        ve1[i] = 100*((np.nanstd(pred_Y)/np.std(Y[~np.isnan(X)]))**2)
-
-        # --------------------------------------------------------
-        # P Version 1
-        # --------------------------------------------------------
-
-        # Compute the sum of squares for the effect
-        SSeffect = np.linalg.norm(pred_Y - np.mean(pred_Y))**2  
-
-        # Compute the sum of squares for the error
-        SSerror = np.linalg.norm(resids - np.mean(resids))**2  
-
-        # Compute the degrees of freedom for the effect
-        df = np.linalg.matrix_rank(X) 
-
-        # Compute the degrees of freedom for the error
-        dferror = len(Y) - df  
-
-        # Compute the F-statistic
-        F = (SSeffect / df) / (SSerror / dferror)  
-
-        # Compute p[i] using the F-distribution
-        p1[i] = 1 - f.cdf(F, df, dferror)  
-
-
-        # --------------------------------------------------------
-        # Variance explained version 2
-        # --------------------------------------------------------
-
-        # Construct new design matrix
-        XplusIntercept = np.ones((X.shape[0],2))
-        XplusIntercept[:,1] = X[:]
-
-        # Perform OLS regression
-        U, D, Vt = np.linalg.svd(XplusIntercept, full_matrices=False)
-
-        # Get the rank of the matrix
-        rank = np.sum(D > 1e-10)
-
-        # Rank reduce U, D and Vt
-        U = U[:, :rank] 
-        Vt = Vt[:rank,:]
-        D = D[:rank]
-
-        # Get betahat
-        beta = (Vt.T/D) @ (U.T @ Y)
-
-        # Get residuals
-        resids = Y - XplusIntercept @ beta
-
-        # Get sigma^2 estimator
-        sigma2 = np.sum(resids**2)/Y.shape[0]
-
-        # Contrast for beta2
-        L = np.array([[0],[1]])
-
-        # Contrast variance
-        invDVtL = Vt/D @ L 
-        varLtBeta = np.sqrt(sigma2*invDVtL.T @ invDVtL)
-
-        # T statistic for contrast
-        T = L.T @ beta / varLtBeta
-
-        # Second version of variance explained
-        ve2[i] = 100*(1-(np.std(resids)**2/np.std(Y)**2))
-
-
-        # --------------------------------------------------------
-        # P-value version 2
-        # --------------------------------------------------------
-
-        # P value
-        p2[i] = 2*t.sf(np.abs(T), dferror)[0,0]
-
-        # --------------------------------------------------------
-        # P-value version 3
-        # --------------------------------------------------------
-
-        # Compute pearson coefficient
-        R, p3[i] = nets_pearson(X,Y)
-
-        # --------------------------------------------------------
-        # Variance explained version 3
-        # --------------------------------------------------------
-
-        # Compute version 3 of variance explained
-        ve3[i] = 100*R**2
+            # Demean the confound data for the current site and nonlinear confound
+            X = nets_demean(pd.DataFrame(nonlinear_confound)).values
+        
+            # Get Y
+            Y = IDPs_deconf[:, IDP_index].values
+            Y = Y[inds_per_site[site_no-1]]
+        
+            # Remove potential nans from X
+            Y = Y[~np.isnan(X)]
+            X = X[~np.isnan(X)]
+        
+            # Get predicted Y = Xbeta
+            pred_Y = np.nansum(X*Y)/np.nansum(X**2)*X
+        
+            # Compute the residuals
+            resids = Y - pred_Y
+        
+            # --------------------------------------------------------
+            # Variance explained version 1
+            # --------------------------------------------------------
+            # Get variance explained by pred_Y
+            ve1[i] = 100*((np.nanstd(pred_Y)/np.std(Y[~np.isnan(X)]))**2)
+        
+            # --------------------------------------------------------
+            # P Version 1
+            # --------------------------------------------------------
+        
+            # Compute the sum of squares for the effect
+            SSeffect = np.linalg.norm(pred_Y - np.mean(pred_Y))**2  
+        
+            # Compute the sum of squares for the error
+            SSerror = np.linalg.norm(resids - np.mean(resids))**2  
+        
+            # Compute the degrees of freedom for the effect
+            df = np.linalg.matrix_rank(X) 
+        
+            # Compute the degrees of freedom for the error
+            dferror = len(Y) - df  
+        
+            # Compute the F-statistic
+            F = (SSeffect / df) / (SSerror / dferror)  
+        
+            # Compute p[i] using the F-distribution
+            p1[i] = 1 - f.cdf(F, df, dferror)  
+        
+        
+            # --------------------------------------------------------
+            # Variance explained version 2
+            # --------------------------------------------------------
+        
+            # Construct new design matrix
+            XplusIntercept = np.ones((X.shape[0],2))
+            XplusIntercept[:,1] = X[:]
+        
+            # Perform OLS regression
+            U, D, Vt = np.linalg.svd(XplusIntercept, full_matrices=False)
+        
+            # Get the rank of the matrix
+            rank = np.sum(D > 1e-10)
+        
+            # Rank reduce U, D and Vt
+            U = U[:, :rank] 
+            Vt = Vt[:rank,:]
+            D = D[:rank]
+        
+            # Get betahat
+            beta = (Vt.T/D) @ (U.T @ Y)
+        
+            # Get residuals
+            resids = Y - XplusIntercept @ beta
+        
+            # Get sigma^2 estimator
+            sigma2 = np.sum(resids**2)/Y.shape[0]
+        
+            # Contrast for beta2
+            L = np.array([[0],[1]])
+        
+            # Contrast variance
+            invDVtL = Vt/D @ L 
+            varLtBeta = np.sqrt(sigma2*invDVtL.T @ invDVtL)
+        
+            # T statistic for contrast
+            T = L.T @ beta / varLtBeta
+        
+            # Second version of variance explained
+            ve2[i] = 100*(1-(np.std(resids)**2/np.std(Y)**2))
+        
+        
+            # --------------------------------------------------------
+            # P-value version 2
+            # --------------------------------------------------------
+        
+            # P value
+            p2[i] = 2*t.sf(np.abs(T), dferror)[0,0]
+        
+            # --------------------------------------------------------
+            # P-value version 3
+            # --------------------------------------------------------
+        
+            # Compute pearson coefficient
+            R, p3[i] = nets_pearson(X,Y)
+        
+            # --------------------------------------------------------
+            # Variance explained version 3
+            # --------------------------------------------------------
+        
+            # Compute version 3 of variance explained
+            ve3[i] = 100*R**2
+    
+        else:
+    
+            # Set values to NaN
+            p1[i] = np.NaN
+            p2[i] = np.NaN
+            p3[i] = np.NaN
+            ve1[i] = np.NaN
+            ve2[i] = np.NaN
+            ve3[i] = np.NaN
+            
         
     # Get the memmap filenames for p values
-    p1_mmap = os.path.join(out_dir, 'p1.npy')
-    p2_mmap = os.path.join(out_dir, 'p2.npy')
-    p3_mmap = os.path.join(out_dir, 'p3.npy')
+    p1_mmap = os.path.join(os.getcwd(),'temp_mmap', 'p1.npy')
+    p2_mmap = os.path.join(os.getcwd(),'temp_mmap', 'p2.npy')
+    p3_mmap = os.path.join(os.getcwd(),'temp_mmap', 'p3.npy')
         
     # Get the memmap filenames for p values
-    ve1_mmap = os.path.join(out_dir, 've1.npy')
-    ve2_mmap = os.path.join(out_dir, 've2.npy')
-    ve3_mmap = os.path.join(out_dir, 've3.npy')
+    ve1_mmap = os.path.join(os.getcwd(),'temp_mmap', 've1.npy')
+    ve2_mmap = os.path.join(os.getcwd(),'temp_mmap', 've2.npy')
+    ve3_mmap = os.path.join(os.getcwd(),'temp_mmap', 've3.npy')
     
     # Indices for where to add to memmap
     indices = np.ix_([IDP_index],np.arange(num_conf_nonlin))
     
     # Add p values to memory maps
-    addBlockToMmap(p1_mmap, p1, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
-    addBlockToMmap(p2_mmap, p2, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
-    addBlockToMmap(p3_mmap, p3, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    addBlockToMmap(p1_mmap, p1, indices,(num_IDPs, num_conf_nonlin),dtype=np.float64)
+    addBlockToMmap(p2_mmap, p2, indices,(num_IDPs, num_conf_nonlin),dtype=np.float64)
+    addBlockToMmap(p3_mmap, p3, indices,(num_IDPs, num_conf_nonlin),dtype=np.float64)
     
     # Add explained variance values to memory maps
-    addBlockToMmap(ve1_mmap, ve1, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
-    addBlockToMmap(ve2_mmap, ve2, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
-    addBlockToMmap(ve3_mmap, ve3, indices,(num_IDPs, num_conf_nonlin),dtype=np.float32)
+    addBlockToMmap(ve1_mmap, ve1, indices,(num_IDPs, num_conf_nonlin),dtype=np.float64)
+    addBlockToMmap(ve2_mmap, ve2, indices,(num_IDPs, num_conf_nonlin),dtype=np.float64)
+    addBlockToMmap(ve3_mmap, ve3, indices,(num_IDPs, num_conf_nonlin),dtype=np.float64)

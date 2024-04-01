@@ -471,7 +471,7 @@ class MemoryMappedDF:
         self_copy.memory_maps = {dtype: os.path.join(directory, f"{fname}_{dtype}.dat") for dtype in self.memory_maps}
         self_copy.column_headers = self.column_headers
         self_copy.data_types = self.data_types
-        self_copy.directory = self.directory
+        self_copy.directory = directory
         self_copy.shape = self.shape
         self_copy.index = self.index
         self_copy.columns = self.columns

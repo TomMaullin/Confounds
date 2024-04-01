@@ -211,21 +211,6 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)
-
-    # ---------------------------------------------------------
-    # Cleanup
-    # ---------------------------------------------------------
-
-    # Remove the temp mmap folder
-    if os.path.exists(os.path.join(os.getcwd(),'temp_mmap')):
-        shutil.rmtree(os.path.join(os.getcwd(),'temp_mmap'))
-
-    # Close the cluster and client
-    client.close()
-    client.shutdown()
-
-    # Delete the objects for good measure
-    del client, cluster
     
     # Return the result
     return(conf_nonlin, IDPs_deconf)

@@ -215,6 +215,17 @@ def nets_deconfound(y, conf, mode='nets_svd', demean=True, dtype='float64',
         
         # Delete the future objects (NOTE: see above comment in setup section).
         del i, completed, futures, future_i
+            
+        # ---------------------------------------------------------
+        # Cleanup
+        # ---------------------------------------------------------
+    
+        # Close the cluster and client
+        client.close()
+        client.shutdown()
+    
+        # Delete the objects for good measure
+        del client, cluster
         
         # Once completed, we read in the final numpy memory map
         deconf_out = np.memmap(os.path.join(os.getcwd(),'temp_mmap','y_deconf.dat'),
