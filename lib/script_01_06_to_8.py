@@ -2,6 +2,7 @@ import os
 import numpy as np
 from scipy.stats import scoreatpercentile
 from src.preproc.switch_type import switch_type
+from src.memmap.MemoryMappedDF import MemoryMappedDF
 
 # -------------------------------------------------------------------------------
 # Script structure:
@@ -19,17 +20,22 @@ from src.preproc.switch_type import switch_type
 #
 # This function takes the below inputs:
 # - ve (filename or MemoryMappedDF): The variance explained memory map.
+# - nonlinear_confounds (filename or MemoryMappedDF): The non-linear confounds
+#                                                     memory map.
 #
 # -----------------------------------------------------------------------------
 #
 # It then thresholds the variance explained and saves a number of files with 
-# the results.
+# the results. It returns:
+# - nonlinear_confounds_reduced (MemoryMappedDF): The nonlinear confounds which
+#                                                 survived thresholding.
 #
 # =============================================================================
-def threshold_ve(ve, out_dir):
+def threshold_ve(ve, nonlinear_confounds, out_dir):
     
     # Convert input to memory mapped dataframes if it isn't already
     ve = switch_type(ve, out_type='MemoryMappedDF')
+    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
     
     # Get the average and maximum variance explained
     avg_ve = ve[:,:].mean()
@@ -84,3 +90,39 @@ def threshold_ve(ve, out_dir):
         for name in nonlin_list:
             f.write(name + '\n')
 
+    # Get the reduced nonlinear confounds
+    nonlinear_confounds_reduced = nonlinear_confounds[:,nonlin_list]
+
+    # Memory map them
+    nonlinear_confounds_reduced = MemoryMappedDF(nonlinear_confounds_reduced)
+
+    # Add groupings
+    groups = nonlinear_confounds.__dict__['groups']
+    
+    # Loop through groups
+    for group_name in groups:
+    
+        # Read in the current variable group
+        current_group = groups[group_name]
+    
+        # Initialise empty list for this group
+        updated_group = []
+        
+        # Loop through the variables
+        for variable in current_group:
+    
+            # Check if its in the reduced confounds
+            if variable in nonlinear_confounds_reduced.columns:
+    
+                # Add to updated_group
+                updated_group = updated_group + [variable]
+    
+        # If the new groups not empty save it as a group in the new memory mapped df
+        if len(updated_group) > 0:
+    
+            # Add the updated group
+            nonlinear_confounds_reduced.set_group(group_name, updated_group)
+
+    # Return result
+    return(nonlinear_confounds_reduced)
+    

@@ -387,6 +387,23 @@ class MemoryMappedDF:
         # Save group name
         self.groups[group_name.lower()] = group_vals
         
+    # ------------------------------------------------------------------------------
+    # The list group function allows us to quickly see the variable groups. If full
+    # is True, we list the variables as well.
+    # ------------------------------------------------------------------------------
+    def list_groups(self, full=False):
+
+        # Loop through groups
+        for group in self.groups:
+
+            # Print the group name
+            if not full:
+                print(group)
+
+            # Print the group name and variables
+            else:
+                print('Group name: ', group)
+                print('Variables in group: ', self.groups[group])
         
     # ------------------------------------------------------------------------------
     # The get group function allows us to quickly access groups of variables by name 
