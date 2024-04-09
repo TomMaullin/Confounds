@@ -88,13 +88,31 @@ def switch_type(x,out_type='numpy',fname=None):
             # Convert x
             x = x.values
 
-        # Otherwise we want to convert to a memmory mapped dataframe.
+        # If we want to convert to a memmory mapped dataframe.
         elif out_type != 'pandas':
 
-            # Raise error
-            raise ValueError('Conversion from pandas to memory mapped dataframe is ' + \
-                             'not supported by this function. Please use the MemoryMappedDF' + \
-                             ' constructor instead.')
+            # Convert to memory mapped df
+            x = MemoryMappedDF(x)
+            
+            # If we want to convert to a file.
+            if out_type == 'filename':
+                
+                # Check if we have a filename
+                if fname is None:
+    
+                    # Raise error
+                    raise ValueError('Output to file requested, but no filename was provided. ' + \
+                                     'Please provide a filename in the switch_type function using ' + \
+                                     '"fname=out_file".')
+
+                # If we have a file name output to it
+                else:
+    
+                    # Save Mmap dataframe
+                    x.save(fname)
+    
+                    # Record filename
+                    x = fname
 
     # If x is a pandas dataframe.
     if  type(x)==numpy.ndarray:

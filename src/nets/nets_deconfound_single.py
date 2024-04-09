@@ -7,14 +7,13 @@ from src.preproc.switch_type import switch_type
 from src.memmap.MemoryMappedDF import MemoryMappedDF
 from src.memmap.addBlockToMmap import addBlockToMmap
 
-
-def nets_deconfound_single_iteration(y, conf, conf_non_nan_inds, columns, mode='nets_svd', non_nan=None, demean=True, dtype=np.float64):
+# Note columns must have same nan_patterns in y.
+def nets_deconfound_single(y, conf, columns, mode='nets_svd', 
+                           non_nan=None, demean=True, dtype=np.float64):
         
-    # Switch type to save transfer costs (we need all of conf in memory)
-    if type(conf)==str:
-        conf = switch_type(conf, out_type="MemoryMappedDF")
-    if type(y)==str:
-        y = switch_type(y,out_type="MemoryMappedDF")
+    # Switch type to save transfer costs 
+    conf = switch_type(conf, out_type="pandas") # Only time all data is read in
+    y = switch_type(y,out_type="MemoryMappedDF")
     
     # Get dimensions we are ouputting to
     out_dim = y.shape
@@ -25,10 +24,6 @@ def nets_deconfound_single_iteration(y, conf, conf_non_nan_inds, columns, mode='
     
     # Get the y's we're interested in
     y_current = y[:,columns]
-
-    # Reduce conf and y down, ignoring the nan rows for conf
-    if conf_non_nan_inds is not None:
-        y_current = y_current[conf_non_nan_inds]
     
     # If we have subset the data we need to demean again
     if demean:
@@ -39,13 +34,13 @@ def nets_deconfound_single_iteration(y, conf, conf_non_nan_inds, columns, mode='
     # Only record nan patterns if they are large enough
     if np.sum(~np.array(y_current.isna().values,dtype=bool)) > 5:
     
-        # If we don't have nans work them out
+        # If we don't have nans recorded work them out
         if non_nan is None:
             non_nan = ~np.array(y_current.isna().astype(int).values,dtype=bool)
             
         # Subset y and conf to the appropriate rows
         y_current = y_current[non_nan]
-        conf_current = conf[:,:][non_nan] # Only time all data is read in
+        conf_current = conf[non_nan]
             
         # Save y index and columns
         y_index = y_current.index

@@ -8,7 +8,8 @@ from src.preproc.switch_type import switch_type
 from src.nets.nets_load_match import nets_load_match
 from src.nets.nets_normalise import nets_normalise
 from src.nets.nets_inverse_normal import nets_inverse_normal
-from src.nets.nets_deconfound import nets_deconfound
+# from src.nets.nets_deconfound import nets_deconfound
+from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
 
 from src.preproc.filter_columns_by_site import filter_columns_by_site
 
@@ -120,11 +121,14 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
         # Deconfound for this site
         # -------------------------------------------------------
 
-        # Perform deconfounding
-        conf_nonlin_deconf = nets_deconfound(conf_group_site_nonlin,
+        # # Perform deconfounding
+        # conf_nonlin_deconf = nets_deconfound(conf_group_site_nonlin,
+        #                                      all_conf_site,
+        #                                      'svd', 
+        #                                      check_nan_patterns=True)
+        conf_nonlin_deconf = nets_deconfound_multiple(conf_group_site_nonlin,
                                              all_conf_site,
-                                             'svd', 
-                                             check_nan_patterns=True)
+                                             'svd')
         
         # Reindex the dataframe to fill off-site values with zeros
         conf_nonlin_deconf = conf_nonlin_deconf.reindex(conf_group.index).fillna(0)
@@ -196,18 +200,20 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     # Deconfound IDPs
     if cluster_cfg is None:
         
-        # Run nets deconfound and get output
-        IDPs_deconf = nets_deconfound(IDPs, all_conf, 
-                                      'nets_svd', conf_has_nans=False,
-                                      check_nan_patterns=False)
+        # # Run nets deconfound and get output
+        # IDPs_deconf = nets_deconfound(IDPs, all_conf, 
+        #                               'nets_svd', conf_has_nans=False,
+        #                               check_nan_patterns=False)output
+        IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd')
     
     else:
         
-        # Run nets_deconfound
-        IDPs_deconf = nets_deconfound(IDPs, all_conf, 
-                                      'nets_svd', conf_has_nans=False,
-                                      check_nan_patterns=False,
-                                      cluster_cfg=cluster_cfg)
+        # # Run nets_deconfound
+        # IDPs_deconf = nets_deconfound(IDPs, all_conf, 
+        #                               'nets_svd', conf_has_nans=False,
+        #                               check_nan_patterns=False,
+        #                               cluster_cfg=cluster_cfg)
+        IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', cluster_cfg=cluster_cfg)
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)
