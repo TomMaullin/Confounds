@@ -19,7 +19,7 @@ from src.memmap.read_memmap_df import read_memmap_df
 #                   saved to file, 'MemoryMappedDF' for a memory mapped data-
 #                   frame object, 'numpy' for a numpy array or 'pandas' for
 #                   a pandas dataframe.
-# - fname (str): Filename to save the object to (only required for out_type=
+# - fname (str): Filename to save the object to (only used when out_type=
 #                'filename').
 #
 # ----------------------------------------------------------------------------
@@ -61,23 +61,9 @@ def switch_type(x,out_type='numpy',fname=None):
 
         # If we just want a filename, save the memory map temporarily to filename
         elif out_type == 'filename':
-
-            # Check if we have a filename
-            if fname is None:
-
-                # Raise error
-                raise ValueError('Output to file requested, but no filename was provided. ' + \
-                                 'Please provide a filename in the switch_type function using ' + \
-                                 '"fname=out_file".')
-
-            # We have a filename, so output to it.
-            else:
                 
-                # Save Mmap dataframe
-                x.save(fname)
-
-                # Record filename
-                x = fname
+            # Save Mmap dataframe
+            x = x.save(fname)
 
     # If x is a pandas dataframe.
     if type(x) == pandas.core.frame.DataFrame:
@@ -97,22 +83,8 @@ def switch_type(x,out_type='numpy',fname=None):
             # If we want to convert to a file.
             if out_type == 'filename':
                 
-                # Check if we have a filename
-                if fname is None:
-    
-                    # Raise error
-                    raise ValueError('Output to file requested, but no filename was provided. ' + \
-                                     'Please provide a filename in the switch_type function using ' + \
-                                     '"fname=out_file".')
-
-                # If we have a file name output to it
-                else:
-    
-                    # Save Mmap dataframe
-                    x.save(fname)
-    
-                    # Record filename
-                    x = fname
+                # Save to file
+                x = x.save(fname)
 
     # If x is a pandas dataframe.
     if  type(x)==numpy.ndarray:

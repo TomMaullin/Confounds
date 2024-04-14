@@ -21,7 +21,7 @@ import numpy as np
 #
 # ============================================================================
 def addBlockToMmap(fname, block, blockInds, dim, dtype=np.float64):
-    
+
     # Check if file is in use
     fileLocked = True
     while fileLocked:
@@ -55,7 +55,7 @@ def addBlockToMmap(fname, block, blockInds, dim, dtype=np.float64):
         memmap = np.memmap(fname, dtype=dtype, mode='w+', shape=dim)
         
     # Get the number of indices we have
-    inds_size = max(ind.size for ind in blockInds)
+    inds_size = np.prod(np.array([ind.size for ind in blockInds]))
             
     # We need data for all values
     if inds_size!=block.size:
@@ -74,7 +74,7 @@ def addBlockToMmap(fname, block, blockInds, dim, dtype=np.float64):
 
     # Sync changes and close the file
     del memmap
-
+    
     # Release the file lock
     os.remove(fname + ".lock")
     os.close(f)

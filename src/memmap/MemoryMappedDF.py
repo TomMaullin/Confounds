@@ -462,30 +462,55 @@ class MemoryMappedDF:
     # ------------------------------------------------------------------------------
     # Save to file
     # ------------------------------------------------------------------------------
-    def save(self, fname):
-        
-        # Get the directory from the filename
-        directory = os.path.dirname(fname)
-        
-        # Create the directory for memory-mapped files if it doesn't exist
-        if not os.path.exists(directory):
-            
-            # Make the directory
-            os.makedirs(directory)
-            
-        # Loop through self.memory_maps copying each memory map file to the new 
-        # directory
-        for dtype, memmap_file in self.memory_maps.items():
+    def save(self, fname=None):
 
-            # Create new filename
-            filename = os.path.join(directory, f"{fname}_{dtype}.dat")
-                    
-            # Copy memmap file to new filename
-            shutil.copy(memmap_file.filename, filename)
+        # If the filename is not none
+        if fname is not None:
+
+            # Seperate the filename and extension
+            file, ext = os.path.splitext(os.path.basename(fname))
+
+            # Default .dat file extension
+            if ext == '':
+                ext = '.dat'
             
+            # Get the directory from the filename
+            directory = os.path.dirname(fname)
+            
+            # Create the directory for memory-mapped files if it doesn't exist
+            if not os.path.exists(directory):
+                
+                # Make the directory
+                os.makedirs(directory)
+                
+            # Loop through self.memory_maps copying each memory map file to the new 
+            # directory
+            for dtype, memmap_file in self.memory_maps.items():
+                
+                # Create new filename
+                filename = os.path.join(directory, f"{file}_{dtype}{ext}")
+                        
+                # Copy memmap file to new filename
+                shutil.copy(memmap_file.filename, filename)
+
+            # List the memory map filenames
+            mmap_fnames = {dtype: os.path.join(directory, f"{file}_{dtype}{ext}") for dtype in self.memory_maps}
+
+        # Otherwise, just save metadata without copying everything
+        else:
+
+            # Get the filename we will save the metadata to
+            fname = os.path.join(self.directory, f"{self.hash}.npz")
+
+            # Directory is unchanged in this case
+            directory = self.directory
+            
+            # Save the memory map filenames
+            mmap_fnames = {dtype: self.memory_maps[dtype].filename for dtype in self.memory_maps}
+                
         # Make a copy of self and change self_copy.memory_maps to the new filenames
         self_copy = self.__class__(pd.DataFrame())
-        self_copy.memory_maps = {dtype: os.path.join(directory, f"{fname}_{dtype}.dat") for dtype in self.memory_maps}
+        self_copy.memory_maps = mmap_fnames
         self_copy.column_headers = self.column_headers
         self_copy.data_types = self.data_types
         self_copy.directory = directory
@@ -495,7 +520,24 @@ class MemoryMappedDF:
         self_copy.groups = self.groups
         self_copy.dtypes = self.dtypes
         self_copy.type = self.type
+
+        # Check if file is in use
+        fileLocked = True
+        while fileLocked:
+            try:
+                # Create lock file, so other jobs know we are writing to this file
+                f = os.open(fname + ".lock", os.O_CREAT|os.O_EXCL|os.O_RDWR)
+                fileLocked = False
+            except FileExistsError:
+                fileLocked = True
         
         # Save copy
-        with open(fname, 'wb') as f:
-            pickle.dump(self_copy, f)
+        with open(fname, 'wb') as file:
+            pickle.dump(self_copy, file)
+
+        # Release the file lock
+        os.remove(fname + ".lock")
+        os.close(f)
+
+        # Return the filename
+        return(fname)

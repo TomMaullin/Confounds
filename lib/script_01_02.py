@@ -5,10 +5,9 @@ import pandas as pd
 
 from src.preproc.switch_type import switch_type
 
-from src.nets.nets_load_match import nets_load_match
 from src.nets.nets_normalise import nets_normalise
+from src.nets.nets_load_match import nets_load_match
 from src.nets.nets_inverse_normal import nets_inverse_normal
-# from src.nets.nets_deconfound import nets_deconfound
 from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
 
 from src.preproc.filter_columns_by_site import filter_columns_by_site
@@ -56,6 +55,32 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     # Get the subject ids
     sub_ids = IDPs.index
 
+    # -------------------------------------------------------------------------
+    # Estimate the block size (number of subjects we want to allow in memory at
+    # a given time).
+    # -------------------------------------------------------------------------
+    # Developer note: The below is only a rough estimate, but is fairly robust
+    # as it is a little conservative. The rule of thumb is to take the maximum
+    # amount of memory (MAXMEM) divide it by the number of subjects we have,
+    # divide by 64 (as each observation is float64 at most) and then divide by
+    # 8 (as we may want to make several copies of whatever we load in, but we
+    # rarely make more than 8). The resulting number should be roughly the
+    # number of columns of a dataframe we are able to load in at a time. This
+    # doesn't need to be perfect as often python can handle more - it is just
+    # a precaution, and does improve efficiency substantially.
+    # -------------------------------------------------------------------------
+
+    # Rough estimate of maximum memory (bytes)
+    MAXMEM = 2**32
+
+    # Get the number of subjects
+    n_sub = len(sub_ids)
+
+    # Block size computation
+    blksize = int(MAXMEM/n_sub/8/64)
+
+    # -------------------------------------------------------------------------
+    
     # Read in the IDs for site
     site_ids = nets_load_match(os.path.join(data_dir, 'ID_SITE.txt'), sub_ids)
 
@@ -77,6 +102,8 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
 
     # Delete the indices
     del indices
+    
+    # -------------------------------------------------------------------------
     
     # Initialise empty array to store results
     conf_nonlin = pd.DataFrame(index=conf_group.index)
@@ -117,21 +144,24 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
                                             conf_group_site_squared_inormal], axis=1)
         conf_group_site_nonlin.index = site_index
 
+        # Catch any nans from fully empty columns (we'll drop these later)
+        conf_group_site_nonlin = conf_group_site_nonlin.fillna(0)
+
         # -------------------------------------------------------
         # Deconfound for this site
         # -------------------------------------------------------
 
-        # # Perform deconfounding
-        # conf_nonlin_deconf = nets_deconfound(conf_group_site_nonlin,
-        #                                      all_conf_site,
-        #                                      'svd', 
-        #                                      check_nan_patterns=True)
+        # Perform deconfounding
         conf_nonlin_deconf = nets_deconfound_multiple(conf_group_site_nonlin,
-                                             all_conf_site,
-                                             'svd')
+                                                      all_conf_site,
+                                                      mode='svd',
+                                                      blksize=blksize)
         
         # Reindex the dataframe to fill off-site values with zeros
         conf_nonlin_deconf = conf_nonlin_deconf.reindex(conf_group.index).fillna(0)
+
+        # Drop any columns with only 5 values or less
+        conf_nonlin_deconf = conf_nonlin_deconf.loc[:, (conf_nonlin_deconf.abs() >1e-8).sum(axis=0) >= 5]
         
         # Concatenate results
         conf_nonlin = conf_nonlin.join(conf_nonlin_deconf, how='outer')
@@ -200,20 +230,38 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     # Deconfound IDPs
     if cluster_cfg is None:
         
-        # # Run nets deconfound and get output
-        # IDPs_deconf = nets_deconfound(IDPs, all_conf, 
-        #                               'nets_svd', conf_has_nans=False,
-        #                               check_nan_patterns=False)output
-        IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd')
+        # Run nets deconfound and get output
+        IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', 
+                                               blksize=blksize, coincident=False)
     
     else:
         
-        # # Run nets_deconfound
-        # IDPs_deconf = nets_deconfound(IDPs, all_conf, 
-        #                               'nets_svd', conf_has_nans=False,
-        #                               check_nan_patterns=False,
-        #                               cluster_cfg=cluster_cfg)
-        IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', cluster_cfg=cluster_cfg)
+        # Run nets_deconfound
+        IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', 
+                                               cluster_cfg=cluster_cfg, blksize=blksize, 
+                                               coincident=False)
+    
+    # Remove the shared version of confounds
+    if os.path.exists(os.path.join(os.getcwd(),'temp_mmap','conf.dat')):  
+
+        # Change back to memory map
+        all_conf = switch_type(os.path.join(os.getcwd(),'temp_mmap','conf.dat'), 
+                               out_type='MemoryMappedDF')
+
+        # Remove files
+        all_conf.cleanup()
+        del all_conf
+
+    # Remove the shared version of IDPs
+    if os.path.exists(os.path.join(os.getcwd(),'temp_mmap','IDPs.dat')):  
+
+        # Change back to memory map
+        IDPs = switch_type(os.path.join(os.getcwd(),'temp_mmap','IDPs.dat'), 
+                           out_type='MemoryMappedDF')
+
+        # Remove files
+        IDPs.cleanup()
+        del IDPs
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)

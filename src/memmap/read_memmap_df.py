@@ -72,7 +72,7 @@ def read_memmap_df(filename, mode='r',make_copy=False):
         # We now make a new copy of the memory map files behind the scenes so we 
         # don't delete the original files on close
         for dtype, memmap_fname in self_copy.memory_maps.items():
-            
+
             # Get number of elements in original memmap
             memmap_numel = np.memmap(memmap_fname, 
                                      dtype=self_copy.data_types[dtype], 
