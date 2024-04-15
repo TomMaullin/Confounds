@@ -151,7 +151,6 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
             # Compute p[i] using the F-distribution
             p1[i] = 1 - f.cdf(F, df, dferror)  
         
-        
             # --------------------------------------------------------
             # Variance explained version 2
             # --------------------------------------------------------

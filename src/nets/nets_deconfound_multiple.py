@@ -131,7 +131,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
         for block in blocks:
 
             # Submit a job to the local cluster
-            future_i = client.submit(nets_deconfound_multiple_v2, 
+            future_i = client.submit(nets_deconfound_multiple, 
                                      scattered_y, scattered_conf, 
                                      mode=scattered_mode, 
                                      blksize=scattered_blksize, 
@@ -154,7 +154,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
             j = j+1
             print('Deconfounded: ' + str(j) + '/' + str(num_blks))
         
-        # Delete the future objects (NOTE: see above comment in setup section).
+        # Delete the future objects.
         del i, completed, futures, future_i
             
         # ---------------------------------------------------------

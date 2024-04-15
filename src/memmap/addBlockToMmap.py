@@ -53,18 +53,6 @@ def addBlockToMmap(fname, block, blockInds, dim, dtype=np.float64):
             
         # Create a new memory-mapped file with correct dimensions
         memmap = np.memmap(fname, dtype=dtype, mode='w+', shape=dim)
-        
-    # Get the number of indices we have
-    inds_size = np.prod(np.array([ind.size for ind in blockInds]))
-            
-    # We need data for all values
-    if inds_size!=block.size:
-
-        # Raise an error
-        raise ValueError('This code expected data of size ' + 
-                         str(inds_size) +
-                         '. However, you passed it data of size ' + 
-                         str(block.size) + '.')
 
     # Add to memmap
     memmap[blockInds] = block.reshape(memmap[blockInds].shape)

@@ -3,13 +3,12 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from src.preproc.switch_type import switch_type
-
 from src.nets.nets_normalise import nets_normalise
 from src.nets.nets_load_match import nets_load_match
 from src.nets.nets_inverse_normal import nets_inverse_normal
 from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
 
+from src.preproc.switch_type import switch_type
 from src.preproc.filter_columns_by_site import filter_columns_by_site
 
 from src.memmap.MemoryMappedDF import MemoryMappedDF
