@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from dask.distributed import Client, as_completed
 
 from src.preproc.switch_type import switch_type
 from src.preproc.filter_columns_by_site import filter_columns_by_site
@@ -13,6 +14,8 @@ from src.memmap.addBlockToMmap import addBlockToMmap
 from src.memmap.MemoryMappedDF import MemoryMappedDF
 
 from src.dask.connect_to_cluster import connect_to_cluster
+
+from lib.script_01_12_to_15 import construct_and_deconfound_ct
 
 # ------------------------------------------------------------------------------
 # This code is based on the matlab version of the confounds code which has the
@@ -275,6 +278,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # Scatter the data across the workers
     scattered_conf = client.scatter(confounds_full)
     scattered_IDPs = client.scatter(IDPs)
+    scattered_data_dir = client.scatter(data_dir)
     scattered_crossed_inds = client.scatter(os.path.join(os.getcwd(),'temp_mmap', 'crossed_inds.dat'))
     scattered_mode = client.scatter('nets_svd')
     scattered_blksize = client.scatter(blksize)
@@ -288,6 +292,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
         # Submit job to the local cluster
         future_i = client.submit(construct_and_deconfound_ct,
                                  scattered_IDPs, scattered_conf, 
+                                 scattered_data_dir,
                                  scattered_crossed_inds,
                                  scattered_mode, scattered_blksize, 
                                  block, pure=False)

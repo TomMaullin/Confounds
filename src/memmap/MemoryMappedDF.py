@@ -124,7 +124,7 @@ class MemoryMappedDF:
                 dtype_out = dtype.type
             
             # Convert the subset dataframe to a numpy array
-            array = df_subset.to_numpy(dtype=dtype_out)
+            array = df_subset.to_numpy(dtype=dtype_out).T # MARKER ADDED .T HERE
             
             # Store column headers and data types for each dtype
             self.column_headers[dtype.name] = df_subset.columns.tolist()
@@ -258,15 +258,15 @@ class MemoryMappedDF:
             selected_columns = [dtype_columns[i] for i in col_indices]
 
             # Extract data from memory map
-            if isinstance(row_slice, (int, np.integer)):
-                data = memmap_file[row_slice, col_indices]
+            if isinstance(col_indices, (int, np.integer)):# MARKER if isinstance(row_slice, (int, np.integer)):
+                data = memmap_file[col_indices, row_slice].T# MARKER data = memmap_file[row_slice, col_indices]
             else:
-                data = memmap_file[row_slice, :][:, col_indices]
-
+                data = memmap_file[col_indices, :][:, row_slice].T# MARKER data = memmap_file[row_slice, :][:, col_indices]
+            
             # Ensure data has at least two dimensions
             if data.ndim == 1:
                 data = np.expand_dims(data, axis=0)
-
+            
             # Populate result dictionary with extracted data
             for i, col in enumerate(selected_columns):
                 result[col] = data[:, i] if data.ndim > 1 else data
@@ -421,7 +421,6 @@ class MemoryMappedDF:
             
             # Convert it to a list containing only that string
             group_names = [group_names]
-        
         
         # Check if group names is a list and if not make it a list
         if not isinstance(group_names, list):

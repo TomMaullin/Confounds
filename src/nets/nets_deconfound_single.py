@@ -7,12 +7,49 @@ from src.preproc.switch_type import switch_type
 from src.memmap.MemoryMappedDF import MemoryMappedDF
 from src.memmap.addBlockToMmap import addBlockToMmap
 
-# Note columns must have same nan_patterns in y.
-def nets_deconfound_single(y, conf, columns, mode='nets_svd', demean=True, dtype=np.float64, out_fname=None):
+# ==========================================================================
+#
+# Regresses conf out of y.
+# 
+# --------------------------------------------------------------------------
+#
+# Parameters:
+#  - y (MemoryMappedDF, filename or pandas df): data to be deconfounded. 
+#                                               Note this function assumes 
+#                                               columns of y all have the
+#                                               same pattern of nan values.
+#  - conf (MemoryMappedDF, filename or pandas df): Variables to regress out
+#                                                  of y.
+#  - mode (string): The mode of computation to use for computating betahat,
+#                   current options are 'pinv' which does pinv(conf.T @ conf)
+#                   @ conf.T, 'svd' which uses an svd based approach or 'qr'
+#                   which uses a qr decomposition based approach, 'nets_svd'
+#                   which performs an svd on conf.T @ conf. Note: pinv is not
+#                   recommended as it is less robust to ill-conditioned
+#                   matrices. 
+#  - columns (list of str): The columns of y to deconfound.
+#  - demean (boolean): If true, all data will be demeaned before and after
+#                      deconfounding.
+#  - dtype: Output datatype (default np.float64)
+#  - out_fname (str): Filename to output to (only necessary if return_df is
+#                     False).
+#  - return_df (boolean): If true the result is returned as a pandas df,
+#                         otherwise is is saved as a memory map (default 
+#                         False).
+#
+# --------------------------------------------------------------------------
+#
+# Returns:
+#  - np.array: Deconfounded y (Output saved to file if running parallel).
+#     
+# ==========================================================================
+def nets_deconfound_single(y, conf, columns, mode='nets_svd', demean=True, 
+                           dtype=np.float64, out_fname=None, return_df=False):
     
-    # Switch type to save transfer costs 
+    # Switch types to save transfer costs 
     conf = switch_type(conf, out_type="pandas") # Only time all data is read in
-    y = switch_type(y,out_type="MemoryMappedDF")
+    if type(y) == str:
+        y = switch_type(y,out_type="MemoryMappedDF")
     
     # Get dimensions we are ouputting to
     out_dim = y.shape
@@ -22,7 +59,10 @@ def nets_deconfound_single(y, conf, columns, mode='nets_svd', demean=True, dtype
     y_columns_original = y.columns
     
     # Get the y's we're interested in
-    y_current = y[:,columns]
+    if type(y) == MemoryMappedDF:
+        y_current = y[:,columns]
+    else:
+        y_current = y.loc[:,columns]
     
     # If we have subset the data we need to demean again
     if demean:
@@ -140,12 +180,20 @@ def nets_deconfound_single(y, conf, columns, mode='nets_svd', demean=True, dtype
     y_deconf_current_with_nans = pd.DataFrame(y_deconf_current_with_nans,
                                               index=y_index_original,
                                               columns=y_deconf_current.columns)
+    # If we are saving the data
+    if not return_df:
+        
+        # Indices for where to add to memmap (note: everything is transposed as these 
+        # files are **much** quicker to save row by row than column by column
+        indices = np.ix_([list(y_columns_original).index(column) for column in columns],
+                         np.arange(out_dim[0]))
     
-    # Indices for where to add to memmap (note: everything is transposed as these 
-    # files are **much** quicker to save row by row than column by column
-    indices = np.ix_([list(y_columns_original).index(column) for column in columns],
-                     np.arange(out_dim[0]))
+        # Add the block to the memory map
+        addBlockToMmap(out_fname,  y_deconf_current_with_nans.values.T, indices, (out_dim[1],out_dim[0]), dtype=dtype)
 
-    # Add the block to the memory map
-    addBlockToMmap(out_fname,  y_deconf_current_with_nans.values.T, indices, (out_dim[1],out_dim[0]), dtype=dtype)
+    # Otherwise return deconfounded df
+    else:
 
+        # Return result
+        return(y_deconf_current_with_nans)
+        

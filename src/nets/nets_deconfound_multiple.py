@@ -38,7 +38,7 @@ from src.nantools.create_nan_patterns import create_nan_patterns
 #  - check_nan_patterns (boolean): If true, the code will check if the
 #                                  confounds can be grouped by the patterns 
 #                                  of missingness they contain.
-#  - dtype: Output datatype (default np.float32)
+#  - dtype: Output datatype (default np.float64)
 #  - cluster_cfg: dictionary containing configuration details for 
 #                 parallelisation. If set to None, it is assumed no 
 #                 parallelisation should be performed.

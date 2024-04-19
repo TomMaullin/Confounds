@@ -57,8 +57,9 @@ def read_memmap_df(filename, mode='r',make_copy=False):
             # Get number of columns in original memmap
             memmap_ncol = len(self_copy.column_headers[dtype])
             
-            # Get memmap shape
-            memmap_shape = (memmap_numel//memmap_ncol, memmap_ncol)
+            # Get memmap shape (note: we have transposed as it makes column
+            # access quicker to save as (columns,rows))
+            memmap_shape = (memmap_ncol, memmap_numel//memmap_ncol)# MARKER (memmap_numel//memmap_ncol, memmap_ncol)
             
             # Create new memory map
             self_copy.memory_maps[dtype]= np.memmap(filename, 
@@ -81,8 +82,9 @@ def read_memmap_df(filename, mode='r',make_copy=False):
             # Get number of columns in original memmap
             memmap_ncol = len(self_copy.column_headers[dtype])
             
-            # Get memmap shape
-            memmap_shape = (memmap_numel//memmap_ncol, memmap_ncol)
+            # Get memmap shape (note: we have transposed as it makes column
+            # access quicker to save as (columns,rows))
+            memmap_shape = (memmap_ncol, memmap_numel//memmap_ncol)# MARKER (memmap_numel//memmap_ncol, memmap_ncol)
             
             # Create new memory map
             self_copy.memory_maps[dtype]= np.memmap(memmap_fname, 

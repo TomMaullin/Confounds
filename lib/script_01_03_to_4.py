@@ -124,46 +124,20 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     # futures dask tries to rerun them every time you call the result function).
     del i, completed, futures, future_i
     
-    # Create p1 memory mapped df
-    p1 = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 'p1.npy'),dtype=dtype,
+    # Create p memory mapped df
+    p = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 'p.npy'),dtype=dtype,
                    shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
-    p1 = pd.DataFrame(p1,index=indices,columns=columns)
-    p1 = MemoryMappedDF(p1)
+    p = pd.DataFrame(p,index=indices,columns=columns)
+    p = MemoryMappedDF(p)
     
-    # Create p2 memory mapped df
-    p2 = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 'p2.npy'),dtype=dtype,
+    # Create ve memory mapped df
+    ve = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've.npy'),dtype=dtype,
                    shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
-    p2 = pd.DataFrame(p2,index=indices,columns=columns)
-    p2 = MemoryMappedDF(p2)
-    
-    # Create p3 memory mapped df
-    p3 = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 'p3.npy'),dtype=dtype,
-                   shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
-    p3 = pd.DataFrame(p3,index=indices,columns=columns)
-    p3 = MemoryMappedDF(p3)
-    
-    # Create ve1 memory mapped df
-    ve1 = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've1.npy'),dtype=dtype,
-                   shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
-    ve1 = pd.DataFrame(ve1,index=indices,columns=columns)
-    ve1 = MemoryMappedDF(ve1)
-    
-    # Create ve2 memory mapped df
-    ve2 = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've2.npy'),dtype=dtype,
-                   shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
-    ve2 = pd.DataFrame(ve2,index=indices,columns=columns)
-    ve2 = MemoryMappedDF(ve2)
-    
-    # Create ve3 memory mapped df
-    ve3 = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've3.npy'),dtype=dtype,
-                   shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
-    ve3 = pd.DataFrame(ve3,index=indices,columns=columns)
-    ve3 = MemoryMappedDF(ve3)
+    ve = pd.DataFrame(ve,index=indices,columns=columns)
+    ve = MemoryMappedDF(ve)
     
     # Remove original files
-    fnames = [os.path.join(os.getcwd(),'temp_mmap', 'p1.npy'), os.path.join(os.getcwd(),'temp_mmap', 'p2.npy'),
-              os.path.join(os.getcwd(),'temp_mmap', 'p3.npy'), os.path.join(os.getcwd(),'temp_mmap', 've1.npy'),
-              os.path.join(os.getcwd(),'temp_mmap', 've2.npy'), os.path.join(os.getcwd(),'temp_mmap', 've3.npy')]
+    fnames = [os.path.join(os.getcwd(),'temp_mmap', 'p.npy'), os.path.join(os.getcwd(),'temp_mmap', 've.npy')]
     
     # Loop through files removing each
     for fname in fnames:
@@ -181,6 +155,6 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     del client, cluster
     
     # Return the new memmaps
-    return(p1, p2, p3, ve1, ve2, ve3)
+    return(p, ve)
 
     
