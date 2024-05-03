@@ -271,10 +271,6 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                 # Save p values and variance explained
                 ve_df[[*nonlinear_confounds_site.columns]] = ve
                 p_df[[*nonlinear_confounds_site.columns]] = p
-        
-        # Convert back to numpy
-        ve = ve_df.values.flatten()
-        p = p_df.values.flatten()
 
     # Otherwise if the method is 4 we can broadcast over IDPs
     if method == 4:
@@ -323,19 +319,18 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
         
         # If coincident we can speed things up by considering multiple columns at once
         for site_no in (unique_site_ids + 1):
-        
             
             # Get the columns of nonlinear_confounds for this site
             nonlinear_confounds_site = filter_columns_by_site(nonlinear_confounds, site_no)
         
             # Check if we have enough values to perform the comparison
-            if len(inds_per_site[site_no-1])!=0:
+            if (len(inds_per_site[site_no-1])!=0) & (nonlinear_confounds_site.shape[1]!=0):
                 
                 # Subset to just this site (remembering zero indexing)
                 nonlinear_confounds_site = nonlinear_confounds_site.iloc[inds_per_site[site_no-1],:]
         
                 # Demean the confound data for the current site and nonlinear confound
-                X = nets_demean(nonlinear_confounds_site).values
+                X = nets_demean(nonlinear_confounds_site).values # MARKER: Needs demean adjustment after y nans
         
                 # Number of confounds for site
                 num_conf_site = nonlinear_confounds_site.shape[1]
@@ -349,7 +344,7 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
         
                 # Get zerod version
                 Y_with_zeros = np.array(Y)
-                Y_with_zeros[np.isnan(Y)]=0
+                Y_with_zeros[np.isnan(Y)]=0 # MARKER: Needs demean adjustment
         
                 # Compute Y'Y. Here each column is treated sepeately so Y is (n x 1)
                 # and Y'Y is a single value for each column
@@ -397,7 +392,7 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                 betahat = XtY/XtX
         
                 # Get variance explained
-                ve = 100*(XtY**2)/YtY/XtX/n_per_col
+                ve = 100*(XtY**2)/YtY/XtX
         
                 # Get degrees of freedom
                 df = 1*np.any(np.abs(X)>1e-8,axis=0)
@@ -414,6 +409,10 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                 # Save p values and variance explained
                 ve_df[[*nonlinear_confounds_site.columns]] = ve.T
                 p_df[[*nonlinear_confounds_site.columns]] = p.T
+
+    # Convert back to numpy
+    ve = ve_df.values.flatten()
+    p = p_df.values.flatten()
     
     # Check if we are returning the result
     if not return_df:

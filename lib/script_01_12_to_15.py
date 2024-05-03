@@ -85,36 +85,28 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, b
     # Set conf_ct columns
     conf_ct.columns = col_names
 
-    # Perform deconfounding
+    # Perform deconfounding # MARKER NEEDS TO BE DONE SITEWISE
     conf_ct = nets_deconfound_single(conf_ct, confounds, col_names, 
                                      mode='nets_svd', demean=True, 
                                      dtype=np.float64, return_df=True)
-
-    with open(os.path.join(os.getcwd(),'tmp.txt'),mode="a") as f_tmp:
-        print('conf_ct shape ', conf_ct.shape, confounds.shape, file=f_tmp)
-        
-    with open(os.path.join(os.getcwd(),'tmp.txt'),mode="a") as f_tmp:
-        print('IDPs shape ', IDPs.shape, file=f_tmp)
-        
+    
+    # Get the number of blocks we are breaking computation into
+    num_blks_IDPs = int(np.ceil(IDPs.shape[1]/blksize))
+    
+    # Get the indices for each block of IDPs
+    idx = np.arange(IDPs.shape[1])
+    blocks_IDPs = [idx[i*blksize:min((i+1)*blksize,IDPs.shape[1])] for i in range(num_blks_IDPs)]
+    
     # Get variance explained and p values
-    for IDP_index in range(IDPs.shape[1]):
-
-        with open(os.path.join(os.getcwd(),'tmp.txt'),mode="a") as f_tmp:
-            print('IDP index ', IDP_index, file=f_tmp)
-            
-        t1 = time.time()
-        # Perform ve and p thresholding
-        ve, p = func_01_05_gen_nonlin_conf(data_dir, IDP_index, 
-                                           conf_ct, IDPs, return_df=True)
+    for block_IDP in blocks_IDPs:
         
-        t2 = time.time()
-
-        with open(os.path.join(os.getcwd(),'tmp.txt'),mode="a") as f_tmp:
-            print('MARKER6 ', t1-t2, file=f_tmp)
-
-        t1 = time.time()
+        # Perform ve and p thresholding
+        ve, p = func_01_05_gen_nonlin_conf(data_dir, block_IDP, 
+                                           conf_ct, IDPs, method=4,
+                                           return_df=True)
+        
         # Indices for where to add to memmap
-        indices = np.ix_([IDP_index],block)
+        indices = np.ix_(block_IDP,block)
         
         # Add p values to memory map
         addBlockToMmap(os.path.join(os.getcwd(),'temp_mmap','p_ct.npy'),
@@ -122,19 +114,4 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, b
         
         # Add ve values to memory map
         addBlockToMmap(os.path.join(os.getcwd(),'temp_mmap','ve_ct.npy'),
-                       p, indices,(n_IDPs, n_ct),dtype=np.float64)
-        
-        t2 = time.time()
-
-        with open(os.path.join(os.getcwd(),'tmp.txt'),mode="a") as f_tmp:
-            print('MARKER7 ', t1-t2, file=f_tmp)
-        
-
-    
-
-        
-    # Return the crossed terms
-    # return(conf_ct)
-
-        
-
+                       ve, indices,(n_IDPs, n_ct),dtype=np.float64)

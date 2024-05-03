@@ -2,12 +2,14 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from scipy.stats import scoreatpercentile
 from dask.distributed import Client, as_completed
 
 from src.preproc.switch_type import switch_type
 from src.preproc.filter_columns_by_site import filter_columns_by_site
 
 from src.nets.nets_load_match import nets_load_match
+from src.nets.nets_deconfound_single import nets_deconfound_single
 from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
 
 from src.memmap.addBlockToMmap import addBlockToMmap
@@ -313,4 +315,183 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # Delete the future objects.
     del i, completed, futures, future_i
 
-    print('done')
+    # Update user.
+    print('Finished deconfounding')
+
+    # ---------------------------------------------------------
+    # Cleanup
+    # ---------------------------------------------------------
+
+    # Close the cluster and client
+    client.close()
+    client.shutdown()
+
+    # Delete the objects for good measure
+    del client, cluster
+
+    # Switch types back
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
+    confounds_full = switch_type(confounds_full, out_type='MemoryMappedDF')
+    
+    # Read in resulting variance explained and convert to dataframe
+    ve_ct = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've_ct.npy'), dtype=np.float64,
+                      shape=(IDPs.shape[1], n_ct),mode='r')[:,:]
+    ve_ct = pd.DataFrame(ve_ct)
+    
+    # Get the average and maximum variance explained
+    avg_ve = ve_ct.mean()
+    max_ve = ve_ct.max()
+    
+    # Get percentage thresholds
+    thr_for_avg = scoreatpercentile(avg_ve.dropna(), 99.9)
+    thr_for_ve = max(1, scoreatpercentile(ve_ct.dropna(), 99.999))
+    
+    # Find indices where average is larger than threshold
+    inds_for_avg = np.where(avg_ve>thr_for_avg)[0]
+    inds_for_ve = np.where(ve_ct.values>thr_for_ve)
+    
+    # Get sorted unique ct indices
+    inds_ct = np.unique(np.concatenate((inds_for_ve[1],inds_for_avg)))
+
+    # Create empty reduced confounds dataframe
+    conf_ct_reduced = pd.DataFrame(np.zeros((n_sub, len(inds_ct))), index=confounds.index, dtype=np.float64).astype('object')
+    
+    # Create empty mean ve
+    avg_ve_reduced = pd.DataFrame(np.zeros((1, len(inds_for_avg))), dtype=np.float64).astype('object')
+    
+    # List for column names for all cts
+    col_names = []
+    
+    # List for column names for average ve selected cts
+    col_names_avg_ve = []
+    
+    # Counter for average ve
+    avg_ve_count = 0
+    
+    # Loop reduced crossed inds
+    for new_row, row in enumerate(inds_ct):
+    
+        # Get indices to construct confound
+        site_no = crossed_inds[int(row),0]
+        i = crossed_inds[int(row),1]
+        j = crossed_inds[int(row),2]
+    
+        # Get the confounds for this site
+        confounds_for_site = filter_columns_by_site(confounds_full, site_no+1, return_df=False)
+    
+        # Get confounds i and j
+        conf_i = confounds_full[:,confounds_for_site[i]].values
+        conf_j = confounds_full[:,confounds_for_site[j]].values
+    
+        # Work out column name
+        col_names = col_names + [confounds_for_site[i] + '__x__' + confounds_for_site[j]]
+    
+        # Compute crossed term
+        conf_ct_reduced.iloc[:,new_row] = conf_i*conf_j
+    
+        # Save details about average ves
+        if row in inds_for_avg:
+        
+            # Work out column name
+            col_names_avg_ve = col_names_avg_ve + [confounds_for_site[i] + '__x__' + confounds_for_site[j]]
+    
+            # Save mean variance explained
+            avg_ve_reduced.iloc[0,avg_ve_count] = avg_ve[int(row)]
+    
+            # Update counter
+            avg_ve_count = avg_ve_count + 1
+    
+    # Set column names
+    conf_ct_reduced.columns = col_names
+    avg_ve_reduced.columns = col_names_avg_ve
+    
+    # Perform deconfounding
+    conf_ct_reduced = nets_deconfound_single(conf_ct_reduced, confounds, col_names, 
+                                             mode='nets_svd', demean=True, 
+                                             dtype=np.float64, return_df=True)
+    
+    # Remove computational zeros
+    conf_ct_reduced[conf_ct_reduced.abs()<1e-10]=0
+    
+    # Tables directory
+    tables_dir = os.path.join(out_dir,'tables')
+    
+    # Check if the 'tables' directory exists
+    if not os.path.exists(tables_dir):
+        os.makedirs(tables_dir)
+    
+    # Write avg ve results to file
+    with open(os.path.join(tables_dir, 'mean_ve_ct.txt'), 'w') as f:
+        for i in list(avg_ve_reduced.columns):
+            f.write(f"{i} {avg_ve_reduced.loc[0,i]:.6f}\n")
+    
+    # Write other ve results to file
+    with open(os.path.join(tables_dir, 've_ct.txt'), 'w') as f:
+        for k in range(len(inds_for_ve[0])):
+    
+            # Get indices for ve
+            IDP_ind = inds_for_ve[0][k]
+            ct_ind = inds_for_ve[1][k]
+            
+            # Get indices to construct confound name
+            site_no = crossed_inds[ct_ind,0]
+            i = crossed_inds[ct_ind,1]
+            j = crossed_inds[ct_ind,2]
+                
+            # Get the confounds for this site
+            confounds_for_site = filter_columns_by_site(confounds_full, site_no+1, return_df=False)
+        
+            # Work out column name
+            col_name = confounds_for_site[i] + '__x__' + confounds_for_site[j]
+    
+            # Write to file
+            f.write(f"{col_name} {IDPs.columns[IDP_ind]} {ve_ct.loc[IDP_ind,ct_ind]:.6f}\n")
+    
+    # Output the list of crossed confound terms
+    with open(os.path.join(out_dir,'tables','list_ct.txt'),'w') as f:
+        for name in list(conf_ct_reduced.columns):
+            f.write(name + '\n')
+
+    # Create output memorymapped dataframe
+    confounds_with_ct = pd.concat((confounds_full[:,:], conf_ct_reduced),axis=1)
+    confounds_with_ct = MemoryMappedDF(confounds_with_ct)
+
+    # Add groupings (This code is over-complicated but I left it this way in case we
+    # ever want to output conf_ct_reduced as a MemoryMappedDF before this and give 
+    # it groupings).
+    groups = {**confounds_full.__dict__['groups']}
+    
+    # Loop through groups
+    for group_name in groups:
+    
+        # Read in the current variable group
+        current_group = groups[group_name]
+    
+        # Initialise empty list for this group
+        updated_group = []
+        
+        # Loop through the variables
+        for variable in current_group:
+    
+            # Check if its in the reduced confounds
+            if (variable in confounds_full.columns):
+    
+                # Add to updated_group
+                updated_group = updated_group + [variable]
+    
+        # If the new groups not empty save it as a group in the new memory mapped df
+        if len(updated_group) > 0:
+    
+            # Add the updated group
+            confounds_with_ct.set_group(group_name, updated_group)
+
+    # Set nonlinear confound group
+    confounds_with_ct.set_group('crossed terms', list(conf_ct_reduced.columns))
+    
+    # Return memory mapped dataframe and IDPs
+    return(IDPs, confounds_with_ct)
+
+
+    
+    
+        
