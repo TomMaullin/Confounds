@@ -186,7 +186,7 @@ def generate_initial_variables(data_dir, out_dir):
     IDP_names = list(IDP_names.reshape(np.prod(IDP_names.shape)))
 
     # Clean up
-    del df
+    del df 
 
     
     # ----------------------------------------------------------------------------------

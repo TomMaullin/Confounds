@@ -8,3 +8,4 @@ src/*/__pycache__
 src/*/.ipynb_checkpoints
 saved_memmaps*
 slurm*
+store*

@@ -79,7 +79,7 @@ from lib.script_01_12_to_15 import construct_and_deconfound_ct
 #
 # ------------------------------------------------------------------------------
 
-def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, data_dir, cluster_cfg=None):
+def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, data_dir, out_dir, cluster_cfg=None):
 
     # --------------------------------------------------------------------------
     # Check the confounds and nonlinear confounds are in a useful format.
