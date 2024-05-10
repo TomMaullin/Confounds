@@ -27,7 +27,7 @@ import numpy as np
 #     
 # ==========================================================================
 def nets_svd(x, reorder=True, tol=1e-10):
-
+    
     # Get dimensions of x
     m, n = x.shape
 
