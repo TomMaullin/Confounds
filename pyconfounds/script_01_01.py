@@ -3,13 +3,13 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from src.nets.nets_load_match import nets_load_match 
-from src.nets.nets_normalise import nets_normalise
+from nets.nets_load_match import nets_load_match 
+from nets.nets_normalise import nets_normalise
 
-from src.duplicate.duplicate_categorical import duplicate_categorical
-from src.duplicate.duplicate_demedian_norm_by_site import duplicate_demedian_norm_by_site
+from duplicate.duplicate_categorical import duplicate_categorical
+from duplicate.duplicate_demedian_norm_by_site import duplicate_demedian_norm_by_site
 
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 
 def generate_raw_confounds(data_dir, sub_ids):

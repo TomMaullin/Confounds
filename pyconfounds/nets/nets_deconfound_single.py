@@ -1,11 +1,11 @@
 import os
 import numpy as np
 import pandas as pd
-from src.nets.nets_svd import nets_svd
-from src.nets.nets_demean import nets_demean
-from src.preproc.switch_type import switch_type
-from src.memmap.MemoryMappedDF import MemoryMappedDF
-from src.memmap.addBlockToMmap import addBlockToMmap
+from nets.nets_svd import nets_svd
+from nets.nets_demean import nets_demean
+from preproc.switch_type import switch_type
+from memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.addBlockToMmap import addBlockToMmap
 
 # ==========================================================================
 #

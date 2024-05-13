@@ -3,7 +3,7 @@ import uuid
 import shutil
 import pickle
 import numpy as np
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------------------------
 # Function to read a MemoryMappedDF instance from a file

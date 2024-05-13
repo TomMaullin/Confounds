@@ -1,4 +1,4 @@
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------
 # Filters columns based on the specified site number.

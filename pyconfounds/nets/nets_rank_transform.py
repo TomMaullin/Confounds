@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy.special import ndtri
-from src.nets.nets_unique import nets_unique
+from nets.nets_unique import nets_unique
 
 # ==========================================================================
 #

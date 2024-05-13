@@ -3,15 +3,15 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from src.nets.nets_normalise import nets_normalise
-from src.nets.nets_load_match import nets_load_match
-from src.nets.nets_inverse_normal import nets_inverse_normal
-from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
+from nets.nets_normalise import nets_normalise
+from nets.nets_load_match import nets_load_match
+from nets.nets_inverse_normal import nets_inverse_normal
+from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
-from src.preproc.switch_type import switch_type
-from src.preproc.filter_columns_by_site import filter_columns_by_site
+from preproc.switch_type import switch_type
+from preproc.filter_columns_by_site import filter_columns_by_site
 
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 # =============================================================================
 #
@@ -107,6 +107,9 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     # Initialise empty array to store results
     conf_nonlin = pd.DataFrame(index=conf_group.index)
 
+    # Load in confounds
+    conf = all_conf[:,:]
+
     # Site number
     for site_index in (unique_site_ids + 1):
         
@@ -120,7 +123,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
         conf_group_site = conf_group_site.iloc[site_indices, :]
 
         # Get all the confounds at the site
-        all_conf_site = all_conf[:,:].iloc[site_indices, :]
+        all_conf_site = conf.iloc[site_indices, :]
 
         # Get index
         site_index = all_conf_site.index
@@ -159,8 +162,26 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
         # Reindex the dataframe to fill off-site values with zeros
         conf_nonlin_deconf = conf_nonlin_deconf.reindex(conf_group.index).fillna(0)
 
-        # Drop any columns with only 5 values or less
-        conf_nonlin_deconf = conf_nonlin_deconf.loc[:, (conf_nonlin_deconf.abs() >1e-8).sum(axis=0) >= 5]
+        # # Drop any columns with only 5 values or less
+        # na_columns = ((~conf_group_site.isna()).sum(axis=0) >= 5)
+    
+        # # Columns for squared
+        # na_columns_squared = na_columns.copy()
+        # na_columns_squared.index = [column + '_squared' for column in na_columns_squared.index]
+        
+        # # Columns for inormal
+        # na_columns_inormal = na_columns.copy()
+        # na_columns_inormal.index = [column + '_inormal' for column in na_columns_inormal.index]
+        
+        # # Columns for squared inormal
+        # na_columns_squared_inormal = na_columns.copy()
+        # na_columns_squared_inormal.index = [column + '_squared_inormal' for column in na_columns_squared_inormal.index]
+        
+        # # Combine
+        # na_columns = pd.concat((na_columns_squared,na_columns_inormal,na_columns_squared_inormal))
+        
+        # # Subset columns
+        # conf_nonlin_deconf = conf_nonlin_deconf.loc[:, na_columns]
         
         # Concatenate results
         conf_nonlin = conf_nonlin.join(conf_nonlin_deconf, how='outer')
@@ -168,7 +189,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     # ---------------------------------------------------------
     # Reorder the columns of conf_nonlin for readability.
     # ---------------------------------------------------------
-
+            
     # Empty array for column names
     col_names = []
 

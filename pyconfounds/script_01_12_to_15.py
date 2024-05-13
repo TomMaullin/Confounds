@@ -3,16 +3,16 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.nets.nets_load_match import nets_load_match
-from src.nets.nets_deconfound_single import nets_deconfound_single
+from nets.nets_load_match import nets_load_match
+from nets.nets_deconfound_single import nets_deconfound_single
 
-from src.memmap.addBlockToMmap import addBlockToMmap
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.addBlockToMmap import addBlockToMmap
+from memmap.MemoryMappedDF import MemoryMappedDF
 
-from src.preproc.switch_type import switch_type
-from src.preproc.filter_columns_by_site import filter_columns_by_site
+from preproc.switch_type import switch_type
+from preproc.filter_columns_by_site import filter_columns_by_site
 
-from lib.script_01_05 import func_01_05_gen_nonlin_conf
+from script_01_05 import func_01_05_gen_nonlin_conf
 
 
 def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, blksize, block):

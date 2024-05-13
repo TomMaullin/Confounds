@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
-from src.nets.nets_normalise import nets_normalise
-from src.nets.nets_load_match import nets_load_match
+from nets.nets_normalise import nets_normalise
+from nets.nets_load_match import nets_load_match
 
 # ==========================================================================
 #

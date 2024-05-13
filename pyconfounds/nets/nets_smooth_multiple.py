@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 from dask.distributed import Client, as_completed
 
-from src.preproc.switch_type import switch_type
+from preproc.switch_type import switch_type
 
-from src.dask.connect_to_cluster import connect_to_cluster
+from dasktools.connect_to_cluster import connect_to_cluster
 
-from src.nets.nets_smooth_single import nets_smooth_single
+from nets.nets_smooth_single import nets_smooth_single
 
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 # ==========================================================================
 #

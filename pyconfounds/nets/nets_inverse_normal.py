@@ -2,8 +2,8 @@ import os
 import warnings
 import numpy as np
 import pandas as pd
-from src.nantools.format_constant_cols import format_constant_cols
-from src.nets.nets_rank_transform import nets_rank_transform
+from nantools.format_constant_cols import format_constant_cols
+from nets.nets_rank_transform import nets_rank_transform
 
 # ==========================================================================
 #

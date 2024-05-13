@@ -3,15 +3,15 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from src.preproc.switch_type import switch_type
+from preproc.switch_type import switch_type
 
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
-from src.nets.nets_svd import nets_svd
-from src.nets.nets_normalise import nets_normalise
-from src.nets.nets_load_match import nets_load_match
-from src.nets.nets_smooth_multiple import nets_smooth_multiple
-from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
+from nets.nets_svd import nets_svd
+from nets.nets_normalise import nets_normalise
+from nets.nets_load_match import nets_load_match
+from nets.nets_smooth_multiple import nets_smooth_multiple
+from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
 def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, cluster_cfg):
 

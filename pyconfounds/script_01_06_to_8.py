@@ -1,8 +1,8 @@
 import os
 import numpy as np
 from scipy.stats import scoreatpercentile
-from src.preproc.switch_type import switch_type
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from preproc.switch_type import switch_type
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 # -------------------------------------------------------------------------------
 # Script structure:

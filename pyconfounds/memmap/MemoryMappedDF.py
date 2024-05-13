@@ -6,7 +6,7 @@ import shutil
 import fnmatch
 import numpy as np
 import pandas as pd
-from src.nantools.create_nan_patterns import create_nan_patterns
+from nantools.create_nan_patterns import create_nan_patterns
 
 # ==================================================================================
 #

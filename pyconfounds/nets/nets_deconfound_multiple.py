@@ -4,17 +4,17 @@ import numpy as np
 import pandas as pd
 from dask.distributed import Client, as_completed
 
-from src.preproc.switch_type import switch_type
+from preproc.switch_type import switch_type
 
-from src.dask.connect_to_cluster import connect_to_cluster
+from dasktools.connect_to_cluster import connect_to_cluster
 
-from src.nets.nets_svd import nets_svd
-from src.nets.nets_demean import nets_demean
-from src.nets.nets_deconfound_single import nets_deconfound_single
+from nets.nets_svd import nets_svd
+from nets.nets_demean import nets_demean
+from nets.nets_deconfound_single import nets_deconfound_single
 
-from src.memmap.MemoryMappedDF import MemoryMappedDF
-from src.nantools.all_non_nan_inds import all_non_nan_inds
-from src.nantools.create_nan_patterns import create_nan_patterns
+from memmap.MemoryMappedDF import MemoryMappedDF
+from nantools.all_non_nan_inds import all_non_nan_inds
+from nantools.create_nan_patterns import create_nan_patterns
 
 # ==========================================================================
 #
@@ -63,7 +63,7 @@ from src.nantools.create_nan_patterns import create_nan_patterns
 # ==========================================================================
 def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float64', 
                              cluster_cfg=None, blksize=1, coincident=True, idx_y=None,
-                             return_result=True, out_fname=None):
+                             return_result=True, out_fname=None, match_matlab=True):
     
     # ----------------------------------------------------------------------------
     # Format data
@@ -206,12 +206,16 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
     
         # Initialise output dataframe
         deconf_out = pd.DataFrame(deconf_out, index=y.index,columns=y.columns,dtype=dtype)
-        
-        # Drop all columns with zeros
-        non_zero_cols = (deconf_out.abs() > 1e-8).sum(axis=0) >= 5#deconf_out.any(axis=0) 
-        
-        # Filter out zero columns using the mask
-        deconf_out = deconf_out.loc[:, non_zero_cols]
+
+        # Check if we are matching the matlab output (the original matlab code
+        # kept zero columns in the data which can impact later steps)
+        if not match_matlab: 
+            
+            # Drop all columns with zeros
+            non_zero_cols = (deconf_out.abs() > 1e-8).sum(axis=0) >= 5#deconf_out.any(axis=0) 
+            
+            # Filter out zero columns using the mask
+            deconf_out = deconf_out.loc[:, non_zero_cols]
             
         # Return result
         return(deconf_out)

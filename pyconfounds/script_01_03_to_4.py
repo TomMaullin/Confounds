@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from dask.distributed import Client, as_completed
 
-from src.preproc.switch_type import switch_type
-from src.memmap.MemoryMappedDF import MemoryMappedDF
-from src.dask.connect_to_cluster import connect_to_cluster
+from preproc.switch_type import switch_type
+from memmap.MemoryMappedDF import MemoryMappedDF
+from dasktools.connect_to_cluster import connect_to_cluster
 
-from lib.script_01_05 import func_01_05_gen_nonlin_conf
+from script_01_05 import func_01_05_gen_nonlin_conf
 
 # from src.preproc.filter_columns_by_site import filter_columns_by_site might be useful
 
@@ -60,6 +60,8 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     # Convert input to memory mapped dataframes if it isn't already
     nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
     IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
+
+    print('nonlinear confounds shape: ', nonlinear_confounds.shape)
     
     # --------------------------------------------------------------------------------
     # Connect to the cluster

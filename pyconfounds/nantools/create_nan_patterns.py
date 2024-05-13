@@ -1,7 +1,7 @@
 import os 
 import numpy as np
 import pandas as pd
-from src.nantools.nan_pattern import nan_pattern
+from nantools.nan_pattern import nan_pattern
 
 # ------------------------------------------------------------------------------
 # The compute NaN patterns function creates a dictionary of the unique patterns

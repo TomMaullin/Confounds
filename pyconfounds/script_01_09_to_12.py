@@ -5,19 +5,19 @@ import pandas as pd
 from scipy.stats import scoreatpercentile
 from dask.distributed import Client, as_completed
 
-from src.preproc.switch_type import switch_type
-from src.preproc.filter_columns_by_site import filter_columns_by_site
+from preproc.switch_type import switch_type
+from preproc.filter_columns_by_site import filter_columns_by_site
 
-from src.nets.nets_load_match import nets_load_match
-from src.nets.nets_deconfound_single import nets_deconfound_single
-from src.nets.nets_deconfound_multiple import nets_deconfound_multiple
+from nets.nets_load_match import nets_load_match
+from nets.nets_deconfound_single import nets_deconfound_single
+from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
-from src.memmap.addBlockToMmap import addBlockToMmap
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.addBlockToMmap import addBlockToMmap
+from memmap.MemoryMappedDF import MemoryMappedDF
 
-from src.dask.connect_to_cluster import connect_to_cluster
+from dasktools.connect_to_cluster import connect_to_cluster
 
-from lib.script_01_12_to_15 import construct_and_deconfound_ct
+from script_01_12_to_15 import construct_and_deconfound_ct
 
 # ------------------------------------------------------------------------------
 # This code is based on the matlab version of the confounds code which has the

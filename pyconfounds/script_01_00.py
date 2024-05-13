@@ -3,13 +3,13 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from src.nets.nets_load_match import nets_load_match
-from src.nets.nets_inverse_normal import nets_inverse_normal
+from nets.nets_load_match import nets_load_match
+from nets.nets_inverse_normal import nets_inverse_normal
 
-from src.preproc.datenum import datenum
-from src.preproc.days_in_year import days_in_year
+from preproc.datenum import datenum
+from preproc.days_in_year import days_in_year
 
-from src.memmap.MemoryMappedDF import MemoryMappedDF
+from memmap.MemoryMappedDF import MemoryMappedDF
 
 
 def generate_initial_variables(data_dir, out_dir):

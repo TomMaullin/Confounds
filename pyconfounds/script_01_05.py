@@ -5,13 +5,17 @@ import pandas as pd
 from scipy.stats import f  
 from scipy.stats import t 
 from scipy.linalg import pinv, lstsq  
-from src.nets.nets_demean import nets_demean
-from src.nets.nets_pearson import nets_pearson
-from src.preproc.switch_type import switch_type
-from src.memmap.read_memmap_df import read_memmap_df
-from src.nets.nets_load_match import nets_load_match
-from src.memmap.addBlockToMmap import addBlockToMmap
-from src.preproc.filter_columns_by_site import filter_columns_by_site
+
+from nets.nets_demean import nets_demean
+from nets.nets_pearson import nets_pearson
+from nets.nets_load_match import nets_load_match
+
+from preproc.switch_type import switch_type
+
+from memmap.read_memmap_df import read_memmap_df
+from memmap.addBlockToMmap import addBlockToMmap
+
+from preproc.filter_columns_by_site import filter_columns_by_site
 
 # =============================================================================
 #
