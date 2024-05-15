@@ -30,7 +30,7 @@ from logio.loading import ascii_loading_bar
 def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
                          blksize_time=1, cluster_cfg=None, idx_IDPs=None, 
                          idx_time=None, return_result=True, out_fname=None,
-                         logfile=logfile):
+                         logfile=None):
     
     # ----------------------------------------------------------------------------
     # Format data
