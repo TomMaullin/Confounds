@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 from nets.nets_normalise import nets_normalise
 from nets.nets_load_match import nets_load_match
@@ -12,6 +13,9 @@ from preproc.switch_type import switch_type
 from preproc.filter_columns_by_site import filter_columns_by_site
 
 from memmap.MemoryMappedDF import MemoryMappedDF
+
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
 # =============================================================================
 #
@@ -37,7 +41,11 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 #  - IDPs_deconf (MemoryMappedDF): Memory mapped deconfounded IDPs
 #
 # =============================================================================
-def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
+def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=None):
+
+    # Update log.
+    my_log(str(datetime.now()) +': Stage 3: Generating nonlinear confounds.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Constructing squared and inormal terms...', mode='a', filename=logfile)
     
     # Convert input to memory mapped dataframes if it isn't already
     all_conf = switch_type(all_conf, out_type='MemoryMappedDF')
@@ -185,7 +193,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
         
         # Concatenate results
         conf_nonlin = conf_nonlin.join(conf_nonlin_deconf, how='outer')
-        
+    
     # ---------------------------------------------------------
     # Reorder the columns of conf_nonlin for readability.
     # ---------------------------------------------------------
@@ -217,6 +225,10 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     # based on site)
     conf_nonlin = conf_nonlin.reindex(sub_ids)
         
+    # Update log
+    my_log(str(datetime.now()) +': Squared and inormal terms constructed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Deconfounding nonlinear terms...', mode='a', filename=logfile)
+    
     # ---------------------------------------------------------
     # Create memory map for nonlinear confound output
     # ---------------------------------------------------------
@@ -261,6 +273,10 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
                                                cluster_cfg=cluster_cfg, blksize=blksize, 
                                                coincident=False)
     
+    # Update log
+    my_log(str(datetime.now()) +': Nonlinear terms deconfounded.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
+    
     # Remove the shared version of confounds
     if os.path.exists(os.path.join(os.getcwd(),'temp_mmap','conf.dat')):  
 
@@ -285,6 +301,10 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg):
     
     # Create memory mapped df for deconfounded IDPs
     IDPs_deconf = MemoryMappedDF(IDPs_deconf)
+    
+    # Update log
+    my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 3 complete.', mode='a', filename=logfile)
     
     # Return the result
     return(conf_nonlin, IDPs_deconf)

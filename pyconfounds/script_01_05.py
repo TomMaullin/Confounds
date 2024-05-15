@@ -5,6 +5,10 @@ import pandas as pd
 from scipy.stats import f  
 from scipy.stats import t 
 from scipy.linalg import pinv, lstsq  
+from datetime import datetime
+
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
 from nets.nets_demean import nets_demean
 from nets.nets_pearson import nets_pearson

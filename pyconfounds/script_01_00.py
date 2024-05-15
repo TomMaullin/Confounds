@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 from nets.nets_load_match import nets_load_match
 from nets.nets_inverse_normal import nets_inverse_normal
@@ -11,9 +12,13 @@ from preproc.days_in_year import days_in_year
 
 from memmap.MemoryMappedDF import MemoryMappedDF
 
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
-def generate_initial_variables(data_dir, out_dir):
-    
+def generate_initial_variables(data_dir, out_dir, logfile=None):
+
+    # Update log
+    my_log(str(datetime.now()) +': Stage 1: Generating Initial Variables.', mode='a', filename=logfile)
     
     # ----------------------------------------------------------------------------------
     # Read subject IDs in and exclude those that have been dropped
@@ -305,12 +310,18 @@ def generate_initial_variables(data_dir, out_dir):
     # Set values with absolute value greater than 5 to NaN
     subset_IDPs_m[np.abs(subset_IDPs_m) > 5] = np.nan
     
+    # Update log
+    my_log(str(datetime.now()) +': Loaded initial variables.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Performing quartile normalisation of IDPs...', mode='a', filename=logfile)
     
     # ----------------------------------------------------------------------------------
     # Quartile Normalisation of IDPS
     # ----------------------------------------------------------------------------------
     IDPs = nets_inverse_normal(subset_IDPs_m)
     
+    # Update log
+    my_log(str(datetime.now()) +': Quartile normalisation complete.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Loading miscellaneous variables...', mode='a', filename=logfile)
     
     # ----------------------------------------------------------------------------------
     # Non-IDPS
@@ -445,6 +456,10 @@ def generate_initial_variables(data_dir, out_dir):
     # Convert the object columns to string
     misc[object_cols] = misc[object_cols].astype("string")
     
+    # Update log
+    my_log(str(datetime.now()) +': Loaded miscellaneous variables and sorted.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
+    
     # ----------------------------------------------------------------------------------
     # Output memmaps
     # ----------------------------------------------------------------------------------
@@ -457,6 +472,10 @@ def generate_initial_variables(data_dir, out_dir):
     
     # Return miscellaneous dataframe
     misc = MemoryMappedDF(misc)
+
+    # Update
+    my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 1: Complete.', mode='a', filename=logfile)
     
     # Return IDPs and nonIDPs
     return(IDPs, nonIDPs, misc)

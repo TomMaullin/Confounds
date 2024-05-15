@@ -2,8 +2,12 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from scipy.stats import scoreatpercentile
 from dask.distributed import Client, as_completed
+
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
 from preproc.switch_type import switch_type
 from preproc.filter_columns_by_site import filter_columns_by_site
@@ -79,8 +83,12 @@ from script_01_12_to_15 import construct_and_deconfound_ct
 #
 # ------------------------------------------------------------------------------
 
-def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, data_dir, out_dir, cluster_cfg=None):
+def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, data_dir, out_dir, cluster_cfg=None, logfile=None):
 
+    # Update log
+    my_log(str(datetime.now()) +': Stage 5: Generating Crossed Terms.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Loading and preprocessing...', mode='a', filename=logfile)
+    
     # --------------------------------------------------------------------------
     # Check the confounds and nonlinear confounds are in a useful format.
     # --------------------------------------------------------------------------    
@@ -177,6 +185,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
 
     # Block size computation
     blksize = int(MAXMEM/n_sub/8/64)
+
+    # Update log
+    my_log(str(datetime.now()) +': Data Loaded and preprocessed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Deconfounding IDPs...', mode='a', filename=logfile)
     
     # -------------------------------------------------------------------------
     # Deconfound IDPs
@@ -190,6 +202,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     IDPs = nets_deconfound_multiple(IDPs, confounds_full, 'nets_svd', 
                                     blksize=blksize, coincident=False,
                                     cluster_cfg=cluster_cfg)
+
+    # Update log
+    my_log(str(datetime.now()) +': IDPs deconfounded.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Connecting to cluster...', mode='a', filename=logfile)
 
     # -------------------------------------------------------------------------
     # Get the number of crossed terms (should be around 42,000)
@@ -288,6 +304,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # Empty futures list
     futures = []
     
+    # Update log
+    my_log(str(datetime.now()) +': Connected to cluster.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Constructing and deconfounding (all) crossed terms...', mode='a', filename=logfile)
+    
     # Loop through each block
     for block in blocks:
 
@@ -304,24 +324,27 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     
     # Completed jobs
     completed = as_completed(futures)
+
+    # Set loading bar to zero
+    my_log(ascii_loading_bar(0), mode='a', filename=logfile)
     
     # Wait for results
     j = 0
     for i in completed:
         i.result()
         j = j+1
-        print('Deconfounded: ' + str(j) + '/' + str(num_blks))
+        my_log(ascii_loading_bar(100*j/num_blks), mode='r', filename=logfile)
     
     # Delete the future objects.
     del i, completed, futures, future_i
 
-    # Update user.
-    print('Finished deconfounding')
-
     # ---------------------------------------------------------
     # Cleanup
     # ---------------------------------------------------------
-
+    
+    # Update log
+    my_log(str(datetime.now()) +': Computing variance explained...', mode='a', filename=logfile)
+    
     # Close the cluster and client
     client.close()
     client.shutdown()
@@ -358,6 +381,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     
     # Create empty mean ve
     avg_ve_reduced = pd.DataFrame(np.zeros((1, len(inds_for_avg))), dtype=np.float64).astype('object')
+
+    # Update log
+    my_log(str(datetime.now()) +': Variance explained computed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Recomputing reduced crossed terms...', mode='a', filename=logfile)
     
     # List for column names for all cts
     col_names = []
@@ -404,6 +431,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # Set column names
     conf_ct_reduced.columns = col_names
     avg_ve_reduced.columns = col_names_avg_ve
+
+    # Update log
+    my_log(str(datetime.now()) +': Reduced crossed terms recomputed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Deconfounding reduced crossed terms...', mode='a', filename=logfile)
     
     # Perform deconfounding
     conf_ct_reduced = nets_deconfound_single(conf_ct_reduced, confounds, col_names, 
@@ -452,6 +483,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
         for name in list(conf_ct_reduced.columns):
             f.write(name + '\n')
 
+    # Update log
+    my_log(str(datetime.now()) +': Reduced crossed terms deconfounded.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
+    
     # Create output memorymapped dataframe
     confounds_with_ct = pd.concat((confounds_full[:,:], conf_ct_reduced),axis=1)
     confounds_with_ct = MemoryMappedDF(confounds_with_ct)
@@ -487,6 +522,10 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
 
     # Set nonlinear confound group
     confounds_with_ct.set_group('crossed terms', list(conf_ct_reduced.columns))
+    
+    # Update log
+    my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 5 complete.', mode='a', filename=logfile)
     
     # Return memory mapped dataframe and IDPs
     return(IDPs, confounds_with_ct)

@@ -1,5 +1,10 @@
 import os
 import numpy as np
+from datetime import datetime
+
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
+
 from scipy.stats import scoreatpercentile
 from preproc.switch_type import switch_type
 from memmap.MemoryMappedDF import MemoryMappedDF
@@ -31,7 +36,11 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 #                                                 survived thresholding.
 #
 # =============================================================================
-def threshold_ve(ve, nonlinear_confounds, out_dir):
+def threshold_ve(ve, nonlinear_confounds, out_dir, logfile=None):
+    
+    # Update log
+    my_log(str(datetime.now()) +': Stage 5: Thresholding variance explained.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Loading and thresholding...', mode='a', filename=logfile)
     
     # Convert input to memory mapped dataframes if it isn't already
     ve = switch_type(ve, out_type='MemoryMappedDF')
@@ -123,6 +132,10 @@ def threshold_ve(ve, nonlinear_confounds, out_dir):
             # Add the updated group
             nonlinear_confounds_reduced.set_group(group_name, updated_group)
 
+    # Update log
+    my_log(str(datetime.now()) +': Data thresholded.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 5: Complete.', mode='a', filename=logfile)
+    
     # Return result
     return(nonlinear_confounds_reduced)
     

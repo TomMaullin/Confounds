@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 from nets.nets_load_match import nets_load_match 
 from nets.nets_normalise import nets_normalise
@@ -11,9 +12,15 @@ from duplicate.duplicate_demedian_norm_by_site import duplicate_demedian_norm_by
 
 from memmap.MemoryMappedDF import MemoryMappedDF
 
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
-def generate_raw_confounds(data_dir, sub_ids):
+def generate_raw_confounds(data_dir, sub_ids, logfile=None):
 
+    # Update log
+    my_log(str(datetime.now()) +': Stage 2: Generating Raw Confounds.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Loading data...', mode='a', filename=logfile)
+    
     # Developer Note: The sorting that used to be at the start of script_01_01 has been
     # relocated to the end of script 01_00 as it needed variables from that script that
     # aren't used here
@@ -75,7 +82,10 @@ def generate_raw_confounds(data_dir, sub_ids):
     # Make into dataframe
     conf_site = pd.DataFrame(conf_site)
     conf_site.columns = names_site
-    
+
+    # Update log
+    my_log(str(datetime.now()) +': Data loaded.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Constructing categorical variables...', mode='a', filename=logfile)
     
     # ----------------------------------------------------------------------------------
     # Construct dummy confounds for categorical variables
@@ -112,6 +122,9 @@ def generate_raw_confounds(data_dir, sub_ids):
     # Set row indices on dataframe
     categorical_IDPs.index = sub_ids
     
+    # Update log
+    my_log(str(datetime.now()) +': Categorical variables constructed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Demedianing continuous variables...', mode='a', filename=logfile)
     
     # ----------------------------------------------------------------------------------
     # Construct dummy confounds for continuous variables
@@ -127,7 +140,11 @@ def generate_raw_confounds(data_dir, sub_ids):
     conf_struct_head_motion  = duplicate_demedian_norm_by_site('STRUCTHEADMOTION', sub_ids, inds_per_site, data_dir)
     conf_age                 = duplicate_demedian_norm_by_site('AGE',              sub_ids, inds_per_site, data_dir)
     conf_te                  = duplicate_demedian_norm_by_site('TE',               sub_ids, inds_per_site, data_dir) 
-
+    
+    # Update log
+    my_log(str(datetime.now()) +': Continuous variables demedianed.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Saving variable groupings...', mode='r', filename=logfile)
+    
     # Concatenate all the DataFrames/Series horizontally
     continuous_IDPs = pd.concat([
         conf_age.reset_index(drop=True),
@@ -241,6 +258,9 @@ def generate_raw_confounds(data_dir, sub_ids):
     confounds.set_group('TABLE', conf_table_pos.columns.tolist() + \
                                  conf_eddy_qc.columns.tolist())
 
+    # Update log
+    my_log(str(datetime.now()) +': Variable groupings saved.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 2 complete.', mode='a', filename=logfile)
     
     # Delete previous dataframes
     del conf_site, categorical_IDPs, continuous_IDPs, conf_age_sex

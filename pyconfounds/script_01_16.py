@@ -2,6 +2,10 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from datetime import datetime
+
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
 from preproc.switch_type import switch_type
 
@@ -15,6 +19,10 @@ from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
 def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, cluster_cfg):
 
+    # Update log
+    my_log(str(datetime.now()) +': Stage 6: Generating Smoothed Terms.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Loading and preprocessing...', mode='a', filename=logfile)
+    
     # Get the subject IDs
     sub_ids = IDPs.index
     
@@ -137,10 +145,12 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     principal_components_dict = {}
     esm_dict = {}
     
+    # Update log
+    my_log(str(datetime.now()) +': Data Loaded and preprocessed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Smoothing date ordered IDPs...', mode='a', filename=logfile)
+    
     # Loop through sites
     for site_id in inds_per_site:
-        
-        print('Smoothing date sorted confounds for site ', str(site_id))
         
         # Get subjects for this site
         inds_site = inds_per_site[site_id]
@@ -156,8 +166,6 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
                                                       blksize=blksize, blksize_time=blksize_time,
                                                       cluster_cfg=cluster_cfg)
     
-        print('Date sorted confounds smoothed for site ', str(site_id))
-    
         # Compute svd of IDPs
         principal_components, esm,_ = nets_svd(smoothed_IDPs_for_site.values)
     
@@ -166,6 +174,11 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         principal_components_dict[site_id] = principal_components
         esm_dict[site_id] = esm
 
+    
+    # Update log
+    my_log(str(datetime.now()) +': Date ordered IDPs smoothed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Computing variance explained...', mode='a', filename=logfile)
+    
     # Estimating the number of temporal components by choosing a number
     # that explains at least 99% of the variance in the smoothed IDPs.
     num_temp_comp = {}
@@ -226,8 +239,11 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         principal_components_dict[site_id] = pd.DataFrame(principal_components_site[:,:n_current],
                                                           index=site_index)
         conf_acq_date_dict[site_id] = nets_normalise(principal_components_dict[site_id]).fillna(0)
-
         
+    # Update log
+    my_log(str(datetime.now()) +': Variance explained computed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Smoothing time ordered IDPs...', mode='a', filename=logfile)
+    
     # Construct column names for temporal components
     tc_colnames = []
     
@@ -276,8 +292,6 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Loop through sites
     for site_id in inds_per_site_sorted:
         
-        print('Smoothing time sorted confounds for site ', str(site_id))
-        
         # Get subjects for this site
         inds_site = inds_per_site_sorted[site_id]
         
@@ -307,6 +321,10 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     num_temp_comp_sorted = {}
     conf_acq_time_dict = {}
      
+    # Update log
+    my_log(str(datetime.now()) +': Time ordered IDPs smoothed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Computing variance explained...', mode='a', filename=logfile)
+    
     # Loop through sites
     for site_id in principal_components_sorted_dict:
     
@@ -384,7 +402,11 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Sum values over sites
     for site_id in num_temp_comp_sorted:
         num_temp_comp_sorted_total = num_temp_comp_sorted_total + num_temp_comp_sorted[site_id]
-        
+
+    # Update log
+    my_log(str(datetime.now()) +': Variance explained computed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
+    
     # Reconstruct principal components confound dataframe
     conf_acq_time = pd.DataFrame(np.zeros((n_sub,num_temp_comp_sorted_total)),
                                  index = sub_ids_sorted,
@@ -442,6 +464,10 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
 
     # Save deconfounded IDPs as memory mapped df
     IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
+    
+    # Update log
+    my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 6 complete.', mode='a', filename=logfile)
     
     # Return memory mapped dataframes
     return(IDPs_deconf, confounds_with_smooth)

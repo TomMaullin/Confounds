@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from dask.distributed import Client, as_completed
 
 from preproc.switch_type import switch_type
@@ -10,8 +11,8 @@ from dasktools.connect_to_cluster import connect_to_cluster
 
 from script_01_05 import func_01_05_gen_nonlin_conf
 
-# from src.preproc.filter_columns_by_site import filter_columns_by_site might be useful
-
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
 
 # -------------------------------------------------------------------------------
 # The layout of scripts 03-06 has changed substantially from the original matlab.
@@ -48,10 +49,11 @@ from script_01_05 import func_01_05_gen_nonlin_conf
 #                 func_01_05. 
 #
 # -------------------------------------------------------------------------------
+def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=None, dtype=np.float64, logfile=None, match_matlab=True):
 
-
-
-def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=None, dtype=np.float64):
+    # Update log
+    my_log(str(datetime.now()) +': Stage 4: Thresholding nonlinear confounds.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Connecting to cluster...', mode='a', filename=logfile)
     
     # --------------------------------------------------------------------------------
     # Convert to memory mapped df (if not already)
@@ -60,8 +62,6 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     # Convert input to memory mapped dataframes if it isn't already
     nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
     IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
-
-    print('nonlinear confounds shape: ', nonlinear_confounds.shape)
     
     # --------------------------------------------------------------------------------
     # Connect to the cluster
@@ -96,6 +96,10 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     # --------------------------------------------------------------------------------
     # Run cluster jobs
     # --------------------------------------------------------------------------------
+
+    # Update log
+    my_log(str(datetime.now()) +': Connected to cluster.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Computing variance explained...', mode='a', filename=logfile)
     
     # Empty futures list
     futures = []
@@ -115,13 +119,19 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     # Completed jobs
     completed = as_completed(futures)
 
+    # Create 0% loading bar
+    my_log(ascii_loading_bar(0), mode='a', filename=logfile)
+    
     # Wait for results
     j = 0
     for i in completed:
         i.result()
         j = j+1
-        print('Computed p-values and variance explained for: ' + str(j) + '/' + str(num_IDPs))
+        my_log(ascii_loading_bar(100*j/num_IDPs), mode='r', filename=logfile)
 
+    # Update log
+    my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
+    
     # Delete the future objects (NOTE: This is important! If you don't delete the 
     # futures dask tries to rerun them every time you call the result function).
     del i, completed, futures, future_i
@@ -136,6 +146,12 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     ve = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've.npy'),dtype=dtype,
                    shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
     ve = pd.DataFrame(ve,index=indices,columns=columns)
+
+    # If we are matching matlab we replace columns with all nan values with zero
+    if match_matlab:
+        ve[ve.columns[ve.isna().all()].tolist()]=0
+    
+    # Save as memory mapped dataframe
     ve = MemoryMappedDF(ve)
     
     # Remove original files
@@ -155,6 +171,10 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
 
     # Delete the objects for good measure
     del client, cluster
+    
+    # Update log
+    my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 4: Complete.', mode='a', filename=logfile)
     
     # Return the new memmaps
     return(p, ve)
