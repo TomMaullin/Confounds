@@ -16,6 +16,9 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 from nantools.all_non_nan_inds import all_non_nan_inds
 from nantools.create_nan_patterns import create_nan_patterns
 
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
+
 # ==========================================================================
 #
 # Regresses conf out of y, handling missing data. Demeans data unless
@@ -63,7 +66,8 @@ from nantools.create_nan_patterns import create_nan_patterns
 # ==========================================================================
 def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float64', 
                              cluster_cfg=None, blksize=1, coincident=True, idx_y=None,
-                             return_result=True, out_fname=None, match_matlab=True):
+                             return_result=True, out_fname=None, logfile=None,
+                             match_matlab=True):
     
     # ----------------------------------------------------------------------------
     # Format data
@@ -113,7 +117,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
         cluster, client = connect_to_cluster(cluster_cfg)
 
         # Print the dask dashboard address
-        print(f"Dask dashboard address: {client.dashboard_link}")
+        my_log(f"Dask dashboard address: {client.dashboard_link}", mode='a', filename=logfile)
         
         # Scatter the data across the workers
         scattered_y = client.scatter(y_fname)
@@ -146,13 +150,20 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
         
         # Completed jobs
         completed = as_completed(futures)
+
+        # If we are outputting to a logfile initialise it
+        if logfile:
+            my_log(ascii_loading_bar(0), mode='a', filename=logfile)
         
         # Wait for results
         j = 0
         for i in completed:
             i.result()
             j = j+1
-            print('Deconfounded: ' + str(j) + '/' + str(num_blks))
+            
+            # Update log
+            if logfile:
+                my_log(ascii_loading_bar(100*j/num_blks), mode='r', filename=logfile)
         
         # Delete the future objects.
         del i, completed, futures, future_i

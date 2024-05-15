@@ -50,9 +50,13 @@ def threshold_ve(ve, nonlinear_confounds, out_dir, logfile=None):
     avg_ve = ve[:,:].mean()
     max_ve = ve[:,:].max()
     
-    # Get percentage thresholds
+    # Get threshold for column mean variance explained
     thr_for_avg = scoreatpercentile(avg_ve, 95)
-    thr_for_ve = max(0.75, scoreatpercentile(ve[:,:].fillna(0).values.flatten(), 99.9))
+
+    # Get threshold for elementwise variance explained
+    flattened_ve = ve[:,:].values.flatten()
+    flattened_ve = flattened_ve[~np.isnan(flattened_ve)]
+    thr_for_ve = max(0.75, scoreatpercentile(flattened_ve, 99.9))
 
     # Find indices where average is larger than threshold
     inds_for_avg = np.where(avg_ve>thr_for_avg)[0]

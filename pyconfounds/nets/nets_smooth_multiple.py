@@ -12,6 +12,9 @@ from nets.nets_smooth_single import nets_smooth_single
 
 from memmap.MemoryMappedDF import MemoryMappedDF
 
+from logio.my_log import my_log
+from logio.loading import ascii_loading_bar
+
 # ==========================================================================
 #
 # --------------------------------------------------------------------------
@@ -26,7 +29,8 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 # ==========================================================================
 def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
                          blksize_time=1, cluster_cfg=None, idx_IDPs=None, 
-                         idx_time=None, return_result=True, out_fname=None):
+                         idx_time=None, return_result=True, out_fname=None,
+                         logfile=logfile):
     
     # ----------------------------------------------------------------------------
     # Format data
@@ -86,7 +90,7 @@ def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
         cluster, client = connect_to_cluster(cluster_cfg)
 
         # Print the dask dashboard address
-        print(f"Dask dashboard address: {client.dashboard_link}")
+        my_log(f"Dask dashboard address: {client.dashboard_link}", mode='a', filename=logfile)
         
         # Scatter the data across the workers
         scattered_time = client.scatter(time_fname)
@@ -122,12 +126,19 @@ def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
         # Completed jobs
         completed = as_completed(futures)
         
+        # If we are outputting to a logfile initialise it
+        if logfile:
+            my_log(ascii_loading_bar(0), mode='a', filename=logfile)
+            
         # Wait for results
         j = 0
         for i in completed:
             i.result()
             j = j+1
-            print('Smoothed: ' + str(j) + '/' + str(num_blks*num_blks_time))
+            
+            # Update log
+            if logfile:
+                my_log(ascii_loading_bar(100*j/(num_blks*num_blks_time)), mode='r', filename=logfile)
         
         # Delete the future objects.
         del i, completed, futures, future_i

@@ -17,7 +17,7 @@ def ascii_loading_bar(percentage):
     empty_bars = bar_length - filled_bars
 
     # Create the loading bar string
-    bar = '[' + '█' * filled_bars + '░' * empty_bars + ']'
+    bar = '[' + '&#9608;' * filled_bars + '&#9619;' * empty_bars + ']'
 
     # Format the percentage string
     percentage_str = f"{percentage:.1f}%"

@@ -165,7 +165,8 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
         conf_nonlin_deconf = nets_deconfound_multiple(conf_group_site_nonlin,
                                                       all_conf_site,
                                                       mode='svd',
-                                                      blksize=blksize)
+                                                      blksize=blksize,
+                                                      logfile=logfile)
         
         # Reindex the dataframe to fill off-site values with zeros
         conf_nonlin_deconf = conf_nonlin_deconf.reindex(conf_group.index).fillna(0)
@@ -264,14 +265,15 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
         
         # Run nets deconfound and get output
         IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', 
-                                               blksize=blksize, coincident=False)
+                                               blksize=blksize, coincident=False, 
+                                               logfile=logfile)
     
     else:
         
         # Run nets_deconfound
         IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', 
                                                cluster_cfg=cluster_cfg, blksize=blksize, 
-                                               coincident=False)
+                                               coincident=False, logfile=logfile)
     
     # Update log
     my_log(str(datetime.now()) +': Nonlinear terms deconfounded.', mode='r', filename=logfile)

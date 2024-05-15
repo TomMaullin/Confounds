@@ -201,7 +201,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # Deconfound IDPs
     IDPs = nets_deconfound_multiple(IDPs, confounds_full, 'nets_svd', 
                                     blksize=blksize, coincident=False,
-                                    cluster_cfg=cluster_cfg)
+                                    cluster_cfg=cluster_cfg, logfile=logfile)
 
     # Update log
     my_log(str(datetime.now()) +': IDPs deconfounded.', mode='r', filename=logfile)

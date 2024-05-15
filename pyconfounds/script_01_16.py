@@ -17,7 +17,7 @@ from nets.nets_load_match import nets_load_match
 from nets.nets_smooth_multiple import nets_smooth_multiple
 from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
-def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, cluster_cfg):
+def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, cluster_cfg, logfile=None):
 
     # Update log
     my_log(str(datetime.now()) +': Stage 6: Generating Smoothed Terms.', mode='a', filename=logfile)
@@ -67,7 +67,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Deconfound IDPs
     IDPs_deconf = nets_deconfound_multiple(IDPs_fname, confounds_fname, 'nets_svd', 
                                            blksize=blksize, coincident=False,
-                                           cluster_cfg=cluster_cfg)
+                                           cluster_cfg=cluster_cfg, logfile=logfile)
 
     # Read IDPs into memory (we will need the whole IDP array)
     IDPs = switch_type(IDPs, out_type='pandas') 
