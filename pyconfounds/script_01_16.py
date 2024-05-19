@@ -60,6 +60,10 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Deconfound IDPs
     # -------------------------------------------------------------------------
 
+    # Update log
+    my_log(str(datetime.now()) +': Data loaded and preprocessed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Deconfounding IDPs...', mode='a', filename=logfile)
+    
     # Switch type to reduce transfer costs
     confounds_fname = switch_type(confounds, out_type='filename')
     IDPs_fname = switch_type(IDPs, out_type='filename')
@@ -146,12 +150,15 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     esm_dict = {}
     
     # Update log
-    my_log(str(datetime.now()) +': Data Loaded and preprocessed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': IDPs deconfounded.', mode='r', filename=logfile)
     my_log(str(datetime.now()) +': Smoothing date ordered IDPs...', mode='a', filename=logfile)
     
     # Loop through sites
     for site_id in inds_per_site:
-        
+
+        # Update log
+        my_log(str(datetime.now()) +': Smoothing site ' + str(site_id) + '.', mode='a', filename=logfile)
+    
         # Get subjects for this site
         inds_site = inds_per_site[site_id]
         
@@ -164,7 +171,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         # Smooth the IDPs
         smoothed_IDPs_for_site = nets_smooth_multiple(times_for_site, IDPs_for_site, sigma,
                                                       blksize=blksize, blksize_time=blksize_time,
-                                                      cluster_cfg=cluster_cfg)
+                                                      cluster_cfg=cluster_cfg, logfile=logfile)
     
         # Compute svd of IDPs
         principal_components, esm,_ = nets_svd(smoothed_IDPs_for_site.values)
@@ -176,7 +183,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
 
     
     # Update log
-    my_log(str(datetime.now()) +': Date ordered IDPs smoothed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Date ordered IDPs smoothed.', mode='a', filename=logfile)
     my_log(str(datetime.now()) +': Computing variance explained...', mode='a', filename=logfile)
     
     # Estimating the number of temporal components by choosing a number
@@ -292,6 +299,9 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Loop through sites
     for site_id in inds_per_site_sorted:
         
+        # Update log
+        my_log(str(datetime.now()) +': Smoothing site ' + str(site_id) + '.', mode='a', filename=logfile)
+        
         # Get subjects for this site
         inds_site = inds_per_site_sorted[site_id]
         
@@ -304,9 +314,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         # Smooth the IDPs
         smoothed_IDPs_for_site = nets_smooth_multiple(times_for_site, IDPs_for_site, sigma,
                                                       blksize=blksize, blksize_time=blksize_time,
-                                                      cluster_cfg=cluster_cfg)
-    
-        print('Time sorted confounds smoothed for site ', str(site_id))
+                                                      cluster_cfg=cluster_cfg, logfile=logfile)
     
         # Compute svd of IDPs
         principal_components_sorted, esm,_ = nets_svd(smoothed_IDPs_for_site.values)

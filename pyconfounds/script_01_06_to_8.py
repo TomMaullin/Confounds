@@ -5,9 +5,10 @@ from datetime import datetime
 from logio.my_log import my_log
 from logio.loading import ascii_loading_bar
 
-from scipy.stats import scoreatpercentile
 from preproc.switch_type import switch_type
 from memmap.MemoryMappedDF import MemoryMappedDF
+
+from nets.nets_percentile import nets_percentile
 
 # -------------------------------------------------------------------------------
 # Script structure:
@@ -51,12 +52,12 @@ def threshold_ve(ve, nonlinear_confounds, out_dir, logfile=None):
     max_ve = ve[:,:].max()
     
     # Get threshold for column mean variance explained
-    thr_for_avg = scoreatpercentile(avg_ve, 95)
+    thr_for_avg = nets_percentile(avg_ve, 95)
 
     # Get threshold for elementwise variance explained
     flattened_ve = ve[:,:].values.flatten()
     flattened_ve = flattened_ve[~np.isnan(flattened_ve)]
-    thr_for_ve = max(0.75, scoreatpercentile(flattened_ve, 99.9))
+    thr_for_ve = max(0.75, nets_percentile(flattened_ve, 99.9))
 
     # Find indices where average is larger than threshold
     inds_for_avg = np.where(avg_ve>thr_for_avg)[0]

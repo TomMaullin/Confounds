@@ -54,7 +54,7 @@ from preproc.filter_columns_by_site import filter_columns_by_site
 # =============================================================================
 def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_deconf,
                                method=1, dtype=np.float64, p_fname=None, ve_fname=None,
-                               return_df=False):
+                               return_df=False, match_matlab=True):
     
     # --------------------------------------------------------------------------------
     # Convert to appropriate datatype. If we have a filename for a memory mapped 
@@ -146,15 +146,25 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                 t1 = time.time()
                 # Demean the confound data for the current site and nonlinear confound
                 X = nets_demean(nonlinear_confounds_site).values
-            
+                X[np.abs(X)<1e-8]=0
+                
                 # Get the IDP
                 Y = IDP[inds_per_site[site_no-1]]
+                Y[np.abs(Y)<1e-8]=0
             
-                # Get predicted Y = Xbeta (note this is being done seperately for each
+                # Get beta estimates (note this is being done seperately for each
                 # column so we are not doing the usual inv(X.T @ X) @ X.T @ Y
-                pred_Y = ((np.sum(X*Y,axis=0)/np.sum(X*X,axis=0))*X)
-                print(pred_Y.shape)
-            
+                betas = np.sum(X*Y,axis=0)/np.sum(X*X,axis=0)
+
+                # Here X is a column vector. To get pred_Y, we need pinv(X'X) rather
+                # than 1/sum(X**2). These computations are identical, except when X'X=[0],
+                # in which case pinv gives [0] but 1/sum(X**2) gives [NaN]. As a result,
+                # we now have to make the below adjustment.
+                betas[np.sum(np.abs(X),axis=0) < 1e-8] = 0
+
+                # Get predicted Y values
+                pred_Y = betas*X
+                
                 # Compute the residuals
                 resids = Y - pred_Y
                 
@@ -275,7 +285,7 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                 
                     # Compute version 3 of variance explained
                     ve = 100*R**2
-        
+            
                 # Save p values and variance explained
                 ve_df[[*nonlinear_confounds_site.columns]] = ve
                 p_df[[*nonlinear_confounds_site.columns]] = p
@@ -338,7 +348,8 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                 nonlinear_confounds_site = nonlinear_confounds_site.iloc[inds_per_site[site_no-1],:]
         
                 # Demean the confound data for the current site and nonlinear confound
-                X = nets_demean(nonlinear_confounds_site).values # MARKER: Needs demean adjustment after y nans
+                X = nets_demean(nonlinear_confounds_site).values 
+                X[np.abs(X)<1e-8]=0
         
                 # Number of confounds for site
                 num_conf_site = nonlinear_confounds_site.shape[1]
@@ -396,20 +407,48 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
                     # Compute XtY current
                     XtY[:,IDP_no] = np.einsum('ij,ik->j', X_current, Y_current)
         
+                    # # If we have empty arrays (no data), we want to record variance explained
+                    # # as nan
+                    # if X_current.size==0:
+        
+                    #     # Save as NaN values to avoid division by zeros
+                    #     XtY[:,IDP_no] = np.nan
+                    #     YtY[:,IDP_no] = 1
+                    #     XtX[:,IDP_no] = 1
+        
+                    # else:
+                        
+                    #     # Get a mask of where X sums to zero
+                    #     zeros_mask = np.where(np.sum(np.abs(X_current),axis=0)<1e-8)
+        
+                    #     # If we have data but X is all zeros, we want to record variance
+                    #     # explained as zero
+                    #     XtX[zeros_mask,IDP_no] = 1
+                    #     YtY[zeros_mask,IDP_no] = 1
+                    #     XtY[zeros_mask,IDP_no] = 0
+
                 # Get betahat
                 betahat = XtY/XtX
         
                 # Get variance explained
                 ve = 100*(XtY**2)/YtY/XtX
+
+                # Adjust for zero valued XtX. As X is a column vector, XtX is a scalar and so
+                # we can mutliply by 1/XtX instead of pinv(XtX) to speed up computation. However,
+                # This doesnt work when XtX=0, in which case pinv(XtX)=0 but 1/XtX=NaN, so we 
+                # have to retroactively take care of this
+                betahat[np.abs(XtX)<1e-8] = 0
+                ve[np.abs(XtX)<1e-8] = 0
         
                 # Get degrees of freedom
-                df = 1*np.any(np.abs(X)>1e-8,axis=0)
+                df = 1*np.any(~np.isnan(X),axis=0)#np.any(np.abs(X)>1e-8,axis=0)
         
                 # Get error degrees of freedom
                 dferror = n_per_col.reshape((1, num_IDPs_block)) - df.reshape((num_conf_site,1))
         
-                # F stat
-                F = ((XtY**2)/YtY/XtX)/(df.reshape((num_conf_site,1))/dferror)
+                # F stat - some division by zero may be encountered here but it is intentional as
+                # this is the best way to handle df=0.
+                F = ve/(100*df.reshape((num_conf_site,1))/dferror)
             
                 # Compute p[i] using the F-distribution
                 p = 1 - f.cdf(F, df.reshape((num_conf_site,1)), dferror)

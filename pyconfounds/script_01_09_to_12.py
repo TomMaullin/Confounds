@@ -3,7 +3,6 @@ import shutil
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from scipy.stats import scoreatpercentile
 from dask.distributed import Client, as_completed
 
 from logio.my_log import my_log
@@ -13,6 +12,7 @@ from preproc.switch_type import switch_type
 from preproc.filter_columns_by_site import filter_columns_by_site
 
 from nets.nets_load_match import nets_load_match
+from nets.nets_percentile import nets_percentile
 from nets.nets_deconfound_single import nets_deconfound_single
 from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
@@ -366,8 +366,12 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     max_ve = ve_ct.max()
     
     # Get percentage thresholds
-    thr_for_avg = scoreatpercentile(avg_ve.dropna(), 99.9)
-    thr_for_ve = max(1, scoreatpercentile(ve_ct.dropna(), 99.999))
+    thr_for_avg = nets_percentile(avg_ve.dropna().values.flatten(), 99.9)
+
+    # Get threshold for elementwise variance explained
+    flattened_ve = ve_ct.values.flatten()
+    flattened_ve = flattened_ve[~np.isnan(flattened_ve)]
+    thr_for_ve = max(1, nets_percentile(flattened_ve, 99.999))
     
     # Find indices where average is larger than threshold
     inds_for_avg = np.where(avg_ve>thr_for_avg)[0]

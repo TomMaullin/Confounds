@@ -148,8 +148,8 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     ve = pd.DataFrame(ve,index=indices,columns=columns)
 
     # If we are matching matlab we replace columns with all nan values with zero
-    if match_matlab:
-        ve[ve.columns[ve.isna().all()].tolist()]=0
+    # if match_matlab:
+    #     ve[ve.columns[ve.isna().all()].tolist()]=0
     
     # Save as memory mapped dataframe
     ve = MemoryMappedDF(ve)
