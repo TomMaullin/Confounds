@@ -5,23 +5,23 @@ import pandas as pd
 from datetime import datetime
 from dask.distributed import Client, as_completed
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
-from preproc.switch_type import switch_type
-from preproc.filter_columns_by_site import filter_columns_by_site
+from pyconfounds.preproc.switch_type import switch_type
+from pyconfounds.preproc.filter_columns_by_site import filter_columns_by_site
 
-from nets.nets_load_match import nets_load_match
-from nets.nets_percentile import nets_percentile
-from nets.nets_deconfound_single import nets_deconfound_single
-from nets.nets_deconfound_multiple import nets_deconfound_multiple
+from pyconfounds.nets.nets_load_match import nets_load_match
+from pyconfounds.nets.nets_percentile import nets_percentile
+from pyconfounds.nets.nets_deconfound_single import nets_deconfound_single
+from pyconfounds.nets.nets_deconfound_multiple import nets_deconfound_multiple
 
-from memmap.addBlockToMmap import addBlockToMmap
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.addBlockToMmap import addBlockToMmap
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
-from dasktools.connect_to_cluster import connect_to_cluster
+from pyconfounds.dasktools.connect_to_cluster import connect_to_cluster
 
-from script_01_12_to_15 import construct_and_deconfound_ct
+from pyconfounds.script_01_12_to_15 import construct_and_deconfound_ct
 
 # ------------------------------------------------------------------------------
 # This code is based on the matlab version of the confounds code which has the

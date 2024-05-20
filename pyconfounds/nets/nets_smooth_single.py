@@ -1,9 +1,9 @@
 import os
 import numpy as np
 import pandas as pd
-from preproc.switch_type import switch_type
-from memmap.MemoryMappedDF import MemoryMappedDF
-from memmap.addBlockToMmap import addBlockToMmap
+from pyconfounds.preproc.switch_type import switch_type
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.addBlockToMmap import addBlockToMmap
 
 # ==========================================================================
 #

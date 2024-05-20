@@ -1,4 +1,4 @@
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------
 #

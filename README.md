@@ -101,4 +101,30 @@ where the local port is the port you want to view on your local machine and the 
 
 ### Structure of the repository
 
+This repository has the following structure.
 
+ - `pyconfounds`: Contains the main Python package code.
+   - `dask_tools`: This folder contains the helper functions used to interface with dask.
+     - `connect_to_cluster.py`: Handles cluster connection for specified cluster_cfgs.
+   - `duplicate`: Contains code for constructing site level (duplicated) confounds.
+     - `duplicate_categorical.py`: Constructs categorical site-level confounds.
+     - `duplicate_demedian_norm_by_site.py`: Constructs and preprocesses continuous site-level confounds.
+   - `logio`: Functions for generating the log file.
+     - `loading.py`: Ascii loading bar function.
+     - `my_log.py`: Function which makes and adds to the html log file.
+   - `memmap`: Functions and classes for memory mapping.
+     - `MemoryMappedDF.py`: Class definition and methods for the Memory Mapped Dataframe.
+     - `addBlockToMmap.py`: Helper function to add chunks of data to numpy memmaps.
+     - `read_memmap_df.py`: Reads in MemoryMappedDF objects.
+   - `nantools`: Functions for categorising patterns of nan values in the data (mostly deprecated).
+     - `all_non_nan_inds.py`: Give the indices of columns of all nan value in a dataframe.
+     - `create_nan_patterns.py`: Saves unique nan patterns from a dataframe to a list.
+     - `format_constant_cols.py`: Helper function to decide what to do in the face of columns of only constant and/or nan values.
+     - `nan_pattern.py`: Returns the pattern of NaN values in a column of data in a useful format.
+   - `nets`: 
+ - `confounds.py`: Main module for running deconfounding code.
+ - `.gitignore`: Specifies files and directories for Git to ignore.
+ - `LICENSE`: Contains the licensing information for the project.
+ - `README.md`: Provides an overview, installation instructions, and usage guidelines.
+ - `pyproject.toml`: Contains project configuration, dependencies, and build instructions.
+ - `requirements.txt`: Lists Python package dependencies required for the project.

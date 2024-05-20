@@ -4,16 +4,16 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from nets.nets_load_match import nets_load_match
-from nets.nets_inverse_normal import nets_inverse_normal
+from pyconfounds.nets.nets_load_match import nets_load_match
+from pyconfounds.nets.nets_inverse_normal import nets_inverse_normal
 
-from preproc.datenum import datenum
-from preproc.days_in_year import days_in_year
+from pyconfounds.preproc.datenum import datenum
+from pyconfounds.preproc.days_in_year import days_in_year
 
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
 # ======================================================================================
 #

@@ -1,7 +1,7 @@
 import numpy
 import pandas
-from memmap.MemoryMappedDF import MemoryMappedDF
-from memmap.read_memmap_df import read_memmap_df
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.read_memmap_df import read_memmap_df
 
 # ----------------------------------------------------------------------------
 #

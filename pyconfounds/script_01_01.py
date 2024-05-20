@@ -4,16 +4,16 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from nets.nets_load_match import nets_load_match 
-from nets.nets_normalise import nets_normalise
+from pyconfounds.nets.nets_load_match import nets_load_match 
+from pyconfounds.nets.nets_normalise import nets_normalise
 
-from duplicate.duplicate_categorical import duplicate_categorical
-from duplicate.duplicate_demedian_norm_by_site import duplicate_demedian_norm_by_site
+from pyconfounds.duplicate.duplicate_categorical import duplicate_categorical
+from pyconfounds.duplicate.duplicate_demedian_norm_by_site import duplicate_demedian_norm_by_site
 
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
 # ======================================================================================
 #

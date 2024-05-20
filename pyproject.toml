@@ -1,5 +1,5 @@
 [project]
-name = "confounds"
+name = "pyconfounds"
 dynamic = ["version"]
 description = "Python implementation of the fMRIb UK Biobank confounds code."
 readme = {file = "README.md", content-type = "text/markdown"}
@@ -11,7 +11,8 @@ dependencies = [
   "dask-jobqueue==0.8.5",
   "numpy==1.26.4",
   "pandas==2.2.2",
-  "scipy==1.13.0"
+  "scipy==1.13.0",
+  "PyYAML==6.0"
 ]
 
 

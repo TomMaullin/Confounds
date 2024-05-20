@@ -1,7 +1,7 @@
 import os 
 import numpy as np
 import pandas as pd
-from nantools.nan_pattern import nan_pattern
+from pyconfounds.nantools.nan_pattern import nan_pattern
 
 # ------------------------------------------------------------------------------
 #

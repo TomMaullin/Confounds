@@ -4,18 +4,18 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from nets.nets_normalise import nets_normalise
-from nets.nets_load_match import nets_load_match
-from nets.nets_inverse_normal import nets_inverse_normal
-from nets.nets_deconfound_multiple import nets_deconfound_multiple
+from pyconfounds.nets.nets_normalise import nets_normalise
+from pyconfounds.nets.nets_load_match import nets_load_match
+from pyconfounds.nets.nets_inverse_normal import nets_inverse_normal
+from pyconfounds.nets.nets_deconfound_multiple import nets_deconfound_multiple
 
-from preproc.switch_type import switch_type
-from preproc.filter_columns_by_site import filter_columns_by_site
+from pyconfounds.preproc.switch_type import switch_type
+from pyconfounds.preproc.filter_columns_by_site import filter_columns_by_site
 
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
 # =============================================================================
 #

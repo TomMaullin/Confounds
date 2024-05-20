@@ -1,21 +1,21 @@
 import os
-import time 
+import yaml 
 import shutil
 import tempfile
 import argparse
 import numpy as np
 import pandas as pd
 
-from script_01_00 import generate_initial_variables
-from script_01_01 import generate_raw_confounds
-from script_01_02 import generate_nonlin_confounds
-from script_01_03_to_4 import get_p_vals_and_ve
-from script_01_06_to_8 import threshold_ve
-from script_01_09_to_12 import generate_crossed_confounds_cluster
-from script_01_16 import generate_smoothed_confounds
+from pyconfounds.script_01_00 import generate_initial_variables
+from pyconfounds.script_01_01 import generate_raw_confounds
+from pyconfounds.script_01_02 import generate_nonlin_confounds
+from pyconfounds.script_01_03_to_4 import get_p_vals_and_ve
+from pyconfounds.script_01_06_to_8 import threshold_ve
+from pyconfounds.script_01_09_to_12 import generate_crossed_confounds_cluster
+from pyconfounds.script_01_16 import generate_smoothed_confounds
 
-from memmap.MemoryMappedDF import MemoryMappedDF
-from memmap.read_memmap_df import read_memmap_df 
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.read_memmap_df import read_memmap_df 
 
 # =====================================================================================
 #

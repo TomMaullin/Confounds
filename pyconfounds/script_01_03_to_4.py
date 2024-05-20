@@ -5,14 +5,14 @@ import pandas as pd
 from datetime import datetime
 from dask.distributed import Client, as_completed
 
-from preproc.switch_type import switch_type
-from memmap.MemoryMappedDF import MemoryMappedDF
-from dasktools.connect_to_cluster import connect_to_cluster
+from pyconfounds.preproc.switch_type import switch_type
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.dasktools.connect_to_cluster import connect_to_cluster
 
-from script_01_05 import func_01_05_gen_nonlin_conf
+from pyconfounds.script_01_05 import func_01_05_gen_nonlin_conf
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
 # -------------------------------------------------------------------------------
 # The layout of scripts 03-06 has changed substantially from the original matlab.

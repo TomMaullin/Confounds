@@ -3,7 +3,7 @@ import uuid
 import shutil
 import pickle
 import numpy as np
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------------------------
 #

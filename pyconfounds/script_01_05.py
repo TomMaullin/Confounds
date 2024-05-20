@@ -7,19 +7,19 @@ from scipy.stats import t
 from scipy.linalg import pinv, lstsq  
 from datetime import datetime
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
-from nets.nets_demean import nets_demean
-from nets.nets_pearson import nets_pearson
-from nets.nets_load_match import nets_load_match
+from pyconfounds.nets.nets_demean import nets_demean
+from pyconfounds.nets.nets_pearson import nets_pearson
+from pyconfounds.nets.nets_load_match import nets_load_match
 
-from preproc.switch_type import switch_type
+from pyconfounds.preproc.switch_type import switch_type
 
-from memmap.read_memmap_df import read_memmap_df
-from memmap.addBlockToMmap import addBlockToMmap
+from pyconfounds.memmap.read_memmap_df import read_memmap_df
+from pyconfounds.memmap.addBlockToMmap import addBlockToMmap
 
-from preproc.filter_columns_by_site import filter_columns_by_site
+from pyconfounds.preproc.filter_columns_by_site import filter_columns_by_site
 
 # =============================================================================
 #

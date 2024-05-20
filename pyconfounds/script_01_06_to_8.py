@@ -2,13 +2,13 @@ import os
 import numpy as np
 from datetime import datetime
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
-from preproc.switch_type import switch_type
-from memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.preproc.switch_type import switch_type
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
-from nets.nets_percentile import nets_percentile
+from pyconfounds.nets.nets_percentile import nets_percentile
 
 # -------------------------------------------------------------------------------
 # Script structure:

@@ -4,20 +4,20 @@ import numpy as np
 import pandas as pd
 from dask.distributed import Client, as_completed
 
-from preproc.switch_type import switch_type
+from pyconfounds.preproc.switch_type import switch_type
 
-from dasktools.connect_to_cluster import connect_to_cluster
+from pyconfounds.dasktools.connect_to_cluster import connect_to_cluster
 
-from nets.nets_svd import nets_svd
-from nets.nets_demean import nets_demean
-from nets.nets_deconfound_single import nets_deconfound_single
+from pyconfounds.nets.nets_svd import nets_svd
+from pyconfounds.nets.nets_demean import nets_demean
+from pyconfounds.nets.nets_deconfound_single import nets_deconfound_single
 
-from memmap.MemoryMappedDF import MemoryMappedDF
-from nantools.all_non_nan_inds import all_non_nan_inds
-from nantools.create_nan_patterns import create_nan_patterns
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
+from pyconfounds.nantools.all_non_nan_inds import all_non_nan_inds
+from pyconfounds.nantools.create_nan_patterns import create_nan_patterns
 
-from logio.my_log import my_log
-from logio.loading import ascii_loading_bar
+from pyconfounds.logio.my_log import my_log
+from pyconfounds.logio.loading import ascii_loading_bar
 
 # ==========================================================================
 #
