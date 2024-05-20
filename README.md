@@ -97,7 +97,7 @@ where `<remote port>` is the port you want to host the file on (e.g. `8701`). In
 ssh -L <local port>:localhost:<remote port> username@hpc_address
 ```
 
-where the local port is the port you want to view on your local machine and the remote port is port hosting the html log file. You should now be able to access the HTML log file in browser by opening `http://localhost:<local port>/<your log file>.html`.
+where the local port is the port you want to view on your local machine and the remote port is port hosting the html log file. You should now be able to access the HTML log file in browser by opening `http://localhost:<local port>/<your log file>.html`. When parallelized computation is being performed using dask, the dask console address is displayed in the `log.html` file and can be accessed by porting in a similar manner to that described above.
 
 ### Structure of the repository
 
@@ -141,6 +141,7 @@ This repository has the following structure.
      - `filter_columns_by_site.py`: Filters the columns of a dataframe to get site-specific confounds.
      - `switch_type.py`: Switches between numpy, pandas, memory mapped dataframe and filenae datatypes.
  - `confounds.py`: Main module for running deconfounding code.
+ - `config.yml`: Empty yaml configuration file.
  - `.gitignore`: Specifies files and directories for Git to ignore.
  - `LICENSE`: Contains the licensing information for the project.
  - `README.md`: Provides an overview, installation instructions, and usage guidelines.
