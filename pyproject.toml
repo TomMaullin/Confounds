@@ -17,3 +17,13 @@ dependencies = [
 
 [project.scripts]
 pyconfounds = "pyconfounds.confounds:_main"
+
+[build-system]
+requires      = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pyconfounds*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyconfounds.__version__"}
