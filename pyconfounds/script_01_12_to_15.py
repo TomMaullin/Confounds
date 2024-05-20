@@ -19,11 +19,37 @@ from preproc.filter_columns_by_site import filter_columns_by_site
 from script_01_05 import func_01_05_gen_nonlin_conf
 
 
-def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, blksize, block):
+# =============================================================================
+#
+# This function constructs and deconfounds a prespecified block of crossed 
+# confound terms. It then computes the variance explained by the crossed terms
+# in the IDPs. The resulting variance explained values, and associated p-values,
+# are then saved to memory maps named `p_ct.py` and `ve_ct.py`.
+#
+# -----------------------------------------------------------------------------
+# 
+# It takes the following inputs:
+#
+#  - IDPs (string or MemoryMappedDF): The memory mapped IDPs.
+#  - confounds (string or MemoryMappedDF): The memory mapped confounds.
+#  - data_dir (string): The directory containing the data.
+#  - out_dir (string): The output directory for results to be saved to.
+#  - crossed_inds (np array): Matrix which can be interpreted as follows: row
+#                             k represents the k-th crossed term to be computed.
+#                             This crossed term is constructed from the product
+#                             of the crossed_inds[k,1]^th and crossed_inds[k,2]^th 
+#                             terms from site number crossed_inds[k,0].
+#  - blksize (int): The largest number of crossed terms we shall read into
+#                   memory at any given time.
+#  - block (numpy array): Numpy array of the indices for the crossed terms we 
+#                         are currently considering.
+#
+# =============================================================================
+def construct_and_deconfound_ct(IDPs, confounds, data_dir, out_dir, crossed_inds, blksize, block):
 
     # Switch type to save transfer costs (we need all of confounds in memory)
-    confounds = switch_type(confounds, out_type='pandas')
-    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
+    confounds = switch_type(confounds, out_type='pandas', out_dir=out_dir) 
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF', out_dir=out_dir) 
     
     # Get the subject ids
     sub_ids = confounds.index
@@ -53,7 +79,7 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, b
         n_ct = n_ct + int((len(columns_for_site)-1)*(len(columns_for_site))/2)
     
     # Read in crossed indices
-    crossed_inds = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 'crossed_inds.dat'), shape=(n_ct,3),dtype='int16') 
+    crossed_inds = np.memmap(os.path.join(out_dir,'temp_mmap', 'crossed_inds.dat'), shape=(n_ct,3),dtype='int16') 
     crossed_inds = crossed_inds[block,:]
 
     # Number of crossed terms (in this block)
@@ -89,10 +115,11 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, b
     # Set conf_ct columns
     conf_ct.columns = col_names
 
-    # Perform deconfounding # MARKER NEEDS TO BE DONE SITEWISE
+    # Perform deconfounding 
     conf_ct = nets_deconfound_single(conf_ct, confounds, col_names, 
                                      mode='nets_svd', demean=True, 
-                                     dtype=np.float64, return_df=True)
+                                     dtype=np.float64, out_dir=out_dir,
+                                     return_df=True)
     
     # Get the number of blocks we are breaking computation into
     num_blks_IDPs = int(np.ceil(IDPs.shape[1]/blksize))
@@ -105,7 +132,7 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, b
     for block_IDP in blocks_IDPs:
         
         # Perform ve and p thresholding
-        ve, p = func_01_05_gen_nonlin_conf(data_dir, block_IDP, 
+        ve, p = func_01_05_gen_nonlin_conf(data_dir, out_dir, block_IDP, 
                                            conf_ct, IDPs, method=4,
                                            return_df=True)
         
@@ -113,9 +140,9 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, crossed_inds, mode, b
         indices = np.ix_(block_IDP,block)
         
         # Add p values to memory map
-        addBlockToMmap(os.path.join(os.getcwd(),'temp_mmap','p_ct.npy'),
+        addBlockToMmap(os.path.join(out_dir,'temp_mmap','p_ct.npy'),
                        p, indices,(n_IDPs, n_ct),dtype=np.float64)
         
         # Add ve values to memory map
-        addBlockToMmap(os.path.join(os.getcwd(),'temp_mmap','ve_ct.npy'),
+        addBlockToMmap(os.path.join(out_dir,'temp_mmap','ve_ct.npy'),
                        ve, indices,(n_IDPs, n_ct),dtype=np.float64)

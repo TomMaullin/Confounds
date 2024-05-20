@@ -6,7 +6,25 @@ import numpy as np
 from memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------------------------
-# Function to read a MemoryMappedDF instance from a file
+#
+# Function to read a MemoryMappedDF instance from a file.
+#
+# ------------------------------------------------------------------------------
+#
+# This function takes as inputs:
+#
+#  - filename (str): The name of the file containing the memory mapped df.
+#  - mode (str): The mode to open the memmap files (e.g. 'r', 'a', etc)
+#  - make_copy (boolean): If true, the function will make a new copy of the 
+#                         memory map on disk. Otherwise it will work with the 
+#                         existing files.
+#
+# ------------------------------------------------------------------------------
+#
+# It then returns:
+#
+#  - MemoryMappedDF: The memory mapped dataframe object read in from the file.
+#
 # ------------------------------------------------------------------------------
 def read_memmap_df(filename, mode='r',make_copy=False):
     
@@ -59,7 +77,7 @@ def read_memmap_df(filename, mode='r',make_copy=False):
             
             # Get memmap shape (note: we have transposed as it makes column
             # access quicker to save as (columns,rows))
-            memmap_shape = (memmap_ncol, memmap_numel//memmap_ncol)# MARKER (memmap_numel//memmap_ncol, memmap_ncol)
+            memmap_shape = (memmap_ncol, memmap_numel//memmap_ncol)
             
             # Create new memory map
             self_copy.memory_maps[dtype]= np.memmap(filename, 
@@ -84,7 +102,7 @@ def read_memmap_df(filename, mode='r',make_copy=False):
             
             # Get memmap shape (note: we have transposed as it makes column
             # access quicker to save as (columns,rows))
-            memmap_shape = (memmap_ncol, memmap_numel//memmap_ncol)# MARKER (memmap_numel//memmap_ncol, memmap_ncol)
+            memmap_shape = (memmap_ncol, memmap_numel//memmap_ncol)
             
             # Create new memory map
             self_copy.memory_maps[dtype]= np.memmap(memmap_fname, 
@@ -96,11 +114,25 @@ def read_memmap_df(filename, mode='r',make_copy=False):
     return(self_copy)
 
 
+# ------------------------------------------------------------------------------
+#
 # Unpickler class used to load in pickled object if class definition isn't where
 # expected.
+#
+# ------------------------------------------------------------------------------
+#
 class MyUnpickler(pickle.Unpickler):
     
+    # --------------------------------------------------------------------------
     # Look for the memory mapped df class
+    # --------------------------------------------------------------------------
+    # Inputs:
+    #  - Module: The class module
+    #  - name: The datatype to look for.
+    # --------------------------------------------------------------------------
+    # Outputs:
+    #  - The class of the module.
+    # --------------------------------------------------------------------------
     def find_class(self, module, name):
         
         # If the name of the object is MemoryMappedDF return the class we loaded

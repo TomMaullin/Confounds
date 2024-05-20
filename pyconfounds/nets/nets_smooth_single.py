@@ -37,6 +37,8 @@ from memmap.addBlockToMmap import addBlockToMmap
 #                         to approximately one standard deviation away from
 #                         the nearest datapoint.
 #  - dtype: Output datatype (default np.float64)
+#  - out_dir (string): The output directory for results to be saved to. If set to
+#                      None (default), current directory is used.
 #  - out_fname (str): Filename to output to (only necessary if return_result is
 #                     False).
 #  - return_result (boolean): If true the result is returned as a pandas df,
@@ -50,12 +52,13 @@ from memmap.addBlockToMmap import addBlockToMmap
 #     
 # ==========================================================================
 def nets_smooth_single(time_full, IDPs, sigma, columns=None, time_reduced_inds=None, 
-                       null_thresh=0.6, dtype=np.float64, out_fname=None, return_result=False):
+                       null_thresh=0.6, dtype=np.float64, out_dir=None, out_fname=None,
+                       return_result=False):
 
     # Switch types to save transfer costs 
-    time_full = switch_type(time_full, out_type="pandas") # Only time all data is read in
+    time_full = switch_type(time_full, out_type="pandas",out_dir=out_dir) # Only time all data is read in
     if type(IDPs) == str:
-        IDPs = switch_type(IDPs,out_type="MemoryMappedDF")
+        IDPs = switch_type(IDPs,out_type="MemoryMappedDF",out_dir=out_dir)
        
     # Save original index and columns for outputting later
     IDPs_index_original = IDPs.index

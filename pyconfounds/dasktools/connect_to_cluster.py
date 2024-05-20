@@ -3,21 +3,26 @@ from dask.distributed import Client, as_completed
 # ==========================================================================
 #
 # The below function takes in a cluster configuration dict and connects to 
-# the corresponding cluster using dask. The dict must have the following
-# arguments:
+# the corresponding cluster using dask. 
 #
-# - 'cluster_type': The type of the cluster to load.
-# - 'num_nodes': The number of nodes to ask for.
+# --------------------------------------------------------------------------
 #
-# If cluster_cfg is None, we set the type to local and the number of nodes
-# to 1.
+# It takes as inputs:
+#
+# - cluster_cfg (dict). The dict must have the following arguments:
+#                           - 'cluster_type' (str): The type of the cluster
+#                                                   to load.
+#                           - 'num_nodes' (int): The number of nodes to ask
+#                                                for.
+#                       If cluster_cfg is None, we set the type to local and
+#                       the number of nodes to 1.
 # 
 # --------------------------------------------------------------------------
 #
-# Returns:
-
-# - 'cluster': The dask cluster object.
-# - 'client': The dask client object.
+# It returns:
+#
+# - cluster: The dask cluster object.
+# - client: The dask client object.
 #
 # ==========================================================================
 def connect_to_cluster(cluster_cfg):

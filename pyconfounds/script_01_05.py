@@ -31,19 +31,28 @@ from preproc.filter_columns_by_site import filter_columns_by_site
 # It takes the following inputs:
 #
 #  - data_dir (string): The directory containing the data.
+#  - out_dir (string): The output directory for results to be saved to.
 #  - IDP_index (int): The index of the IDP to be analyzed.
-#  - nonlinear_confounds (str): Filename for memory mapped nonlinear confounds.
-#  - IDPs_deconf (str): Filename for memory mapped deconfounded IDPs.
+#  - nonlinear_confounds (string or MemoryMappedDF): The memory mapped nonlinear
+#                                                    confounds.
+#  - IDPs_deconf (string or MemoryMappedDF): The memory mapped IDPs, previously
+#                                            deconfounded by linear terms.
 #  - method (int): Integer value of 1, 2 or 3, corresponding to the three 
 #                  methods of computation which can be used.
+#  - dtype (object/string): The dtype to output data as (default np.float64).
+#  - p_fname (string): Filename to save p-values to. If set to None, a random
+#                      hash is used as a filename.
+#  - ve_fname (string): Filename to save variance explained to. If set to 
+#                       None, a random hash is used as a filename.
 #  - return_df (boolean): If true the result is returned as a pandas df,
-#                         otherwise is is saved as a memory map (default 
+#                         otherwise is is saved as a memory map file (default 
 #                         False).
 #
 # -----------------------------------------------------------------------------
 #
-# It saves all p-value results to files named p*.npy and variance explained 
-# values to ve*.npy.
+# If return_df is True, it returns:
+#  - ve (numpy array): Numpy array of variance explained values.
+#  - p (numpy array): Numpy array of p-values.
 #
 # -----------------------------------------------------------------------------
 #
@@ -52,9 +61,9 @@ from preproc.filter_columns_by_site import filter_columns_by_site
 # to the matlab function func_01_05_gen_nonlin_conf.m.
 #
 # =============================================================================
-def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_deconf,
+def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_deconf,
                                method=1, dtype=np.float64, p_fname=None, ve_fname=None,
-                               return_df=False, match_matlab=True):
+                               return_df=False):
     
     # --------------------------------------------------------------------------------
     # Convert to appropriate datatype. If we have a filename for a memory mapped 
@@ -68,13 +77,13 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
     if type(nonlinear_confounds) == str:
         
         # Convert input to memory mapped dataframes if it isn't already
-        nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
+        nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF', out_dir=out_dir) 
         
     # If we only have filename
     if type(IDPs_deconf) == str:
         
         # Convert input to memory mapped dataframes if it isn't already
-        IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
+        IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF', out_dir=out_dir) 
 
     # Get the subject ids
     sub_ids = IDPs_deconf.index
@@ -466,11 +475,11 @@ def func_01_05_gen_nonlin_conf(data_dir, IDP_index, nonlinear_confounds, IDPs_de
         
         # Get the memmap filenames for p values
         if p_fname is None:
-            p_fname = os.path.join(os.getcwd(),'temp_mmap', 'p.npy')
+            p_fname = os.path.join(out_dir,'temp_mmap', 'p.npy')
             
         # Get the memmap filenames for p values
         if ve_fname is None:
-            ve_fname = os.path.join(os.getcwd(),'temp_mmap', 've.npy')
+            ve_fname = os.path.join(out_dir,'temp_mmap', 've.npy')
         
         # Check the type of IDP index
         if type(IDP_index) in (np.int64, np.int32, np.int16, 'int64', 'int32', 'int16'):

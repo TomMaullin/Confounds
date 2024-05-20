@@ -34,7 +34,8 @@ from nets.nets_load_match import nets_load_match
 # - confs_out (pd Dataframe): The new confound matrix.
 #
 # ==========================================================================
-def duplicate_demedian_norm_by_site(conf_name, ids, subject_indices_by_site, data_dir, preserve_nans=False):
+def duplicate_demedian_norm_by_site(conf_name, ids, subject_indices_by_site, 
+                                    data_dir, preserve_nans=False):
 
     # Construct file names
     names_file =  os.path.join(data_dir, '..', 'NAMES_confounds', f'{conf_name}.txt')

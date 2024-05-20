@@ -17,10 +17,48 @@ from nets.nets_load_match import nets_load_match
 from nets.nets_smooth_multiple import nets_smooth_multiple
 from nets.nets_deconfound_multiple import nets_deconfound_multiple
 
-def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, cluster_cfg, logfile=None):
+# =============================================================================
+#
+# This function takes in the confounds and IDPs, smooths the confounds
+# temporarily according to scan date or time of day, performs PCA on the 
+# smoothed terms and retains the components that explain 99% of the variance in
+# the IDPs. The resulting components are added to the confounds matrix and 
+# returned.
+#
+# -----------------------------------------------------------------------------
+# 
+# It takes the following inputs:
+#
+#  - IDPs (string or MemoryMappedDF): The memory mapped IDPs.
+#  - confounds (string or MemoryMappedDF): The memory mapped confounds.
+#  - nonIDPs (string or MemoryMappedDF): The memory mapped nonIDPs.
+#  - data_dir (string): The directory containing the input data.
+#  - out_dir (string): The output directory for results to be saved to.
+#  - cluster_cfg (dict): Cluster configuration dictionary containing the type
+#                        of cluster we want to run (e.g. 'local', 'slurm', 
+#                        'sge',... etc) and the number of nodes we want to run 
+#                        on (e.g. '12').
+#  - logfile (string): A html filename for the logs to be print to. If None, no
+#                      logs are output.
+#  - MAXMEM (int): Maximum amount of memory (in bits) that the code is allowed
+#                  to work with. If MAXMEM is none (default) the code assumes
+#                  the SPM default of 2^32.
+#
+# -----------------------------------------------------------------------------
+# 
+# It returns:
+#
+#  - IDPs_deconf (MemoryMappedDF): The IDPs deconfounded by the (original) 
+#                                  confound matrix.
+#  - confounds_with_smooth (MemoryMappedDF): The confound matrix with smoothed
+#                                            terms added.
+#
+# =============================================================================
+def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, 
+                                cluster_cfg, logfile=None, MAXMEM=None):
 
     # Update log
-    my_log(str(datetime.now()) +': Stage 6: Generating Smoothed Terms.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 7: Generating Smoothed Terms.', mode='a', filename=logfile)
     my_log(str(datetime.now()) +': Loading and preprocessing...', mode='a', filename=logfile)
     
     # Get the subject IDs
@@ -42,7 +80,8 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # -------------------------------------------------------------------------
     
     # Rough estimate of maximum memory (bytes)
-    MAXMEM = 2**32
+    if MAXMEM is None:
+        MAXMEM = 2**32
 
     # Get the number of subjects
     n_sub = len(sub_ids)
@@ -60,8 +99,12 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Deconfound IDPs
     # -------------------------------------------------------------------------
 
+    # Check we have a temporary memmap directory
+    if not os.path.exists(os.path.join(out_dir, 'temp_mmap')):
+        os.makedirs(os.path.join(out_dir, 'temp_mmap'))
+
     # We first remove the IDPs columns that are more than 50% nan
-    IDPs = switch_type(IDPs, out_type='pandas') 
+    IDPs = switch_type(IDPs, out_type='pandas', out_dir=out_dir)
     
     # Calculate the percentage of NaN values in each column
     nan_pct = IDPs.isna().mean()
@@ -77,16 +120,17 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     my_log(str(datetime.now()) +': Deconfounding IDPs...', mode='a', filename=logfile)
     
     # Switch type to reduce transfer costs
-    confounds_fname = switch_type(confounds, out_type='filename')
-    IDPs_fname = switch_type(IDPs, out_type='filename')
+    confounds_fname = switch_type(confounds, out_type='filename', out_dir=out_dir)
+    IDPs_fname = switch_type(IDPs, out_type='filename', out_dir=out_dir)
     
     # Deconfound IDPs
     IDPs_deconf = nets_deconfound_multiple(IDPs_fname, confounds_fname, 'nets_svd', 
                                            blksize=blksize, coincident=False,
-                                           cluster_cfg=cluster_cfg, logfile=logfile)
+                                           cluster_cfg=cluster_cfg, 
+                                           out_dir=out_dir, logfile=logfile)
 
     # Read IDPs into memory (we will need the whole IDP array)
-    IDPs = switch_type(IDPs, out_type='pandas') 
+    IDPs = switch_type(IDPs, out_type='pandas', out_dir=out_dir) 
 
     # -------------------------------------------------------------------------
     # Preprocess time variables
@@ -183,7 +227,8 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         # Smooth the IDPs
         smoothed_IDPs_for_site = nets_smooth_multiple(times_for_site, IDPs_for_site, sigma,
                                                       blksize=blksize, blksize_time=blksize_time,
-                                                      cluster_cfg=cluster_cfg, logfile=logfile)
+                                                      cluster_cfg=cluster_cfg, out_dir=out_dir,
+                                                      logfile=logfile)
     
         # Compute svd of IDPs
         principal_components, esm,_ = nets_svd(smoothed_IDPs_for_site.values)
@@ -326,7 +371,8 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         # Smooth the IDPs
         smoothed_IDPs_for_site = nets_smooth_multiple(times_for_site, IDPs_for_site, sigma,
                                                       blksize=blksize, blksize_time=blksize_time,
-                                                      cluster_cfg=cluster_cfg, logfile=logfile)
+                                                      cluster_cfg=cluster_cfg, out_dir=out_dir,
+                                                      logfile=logfile)
     
         # Compute svd of IDPs
         principal_components_sorted, esm,_ = nets_svd(smoothed_IDPs_for_site.values)
@@ -447,7 +493,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
 
     # Create output memorymapped dataframe
     confounds_with_smooth = pd.concat((confounds[:,:], conf_acq_date, conf_acq_time),axis=1)
-    confounds_with_smooth = MemoryMappedDF(confounds_with_smooth)
+    confounds_with_smooth = MemoryMappedDF(confounds_with_smooth, directory=out_dir)
 
     # Add groupings (This code is over-complicated but I left it this way in case we
     # ever want to output the smoothed confounds as MemoryMappedDFs before this and give 
@@ -483,11 +529,11 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     confounds_with_smooth.set_group('acq time', list(conf_acq_time.columns))
 
     # Save deconfounded IDPs as memory mapped df
-    IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
+    IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF',out_dir=out_dir)
     
     # Update log
     my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
-    my_log(str(datetime.now()) +': Stage 6 complete.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 7 complete.', mode='a', filename=logfile)
     
     # Return memory mapped dataframes
     return(IDPs_deconf, confounds_with_smooth)

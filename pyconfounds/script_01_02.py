@@ -19,19 +19,24 @@ from logio.loading import ascii_loading_bar
 
 # =============================================================================
 #
-# This function deconfounded IDPs and the nonlinear confounds.
+# This function deconfounds the IDPs and generates the the nonlinear confounds.
 #
 # -----------------------------------------------------------------------------
 # 
 # It takes the following inputs:
 #
 #  - data_dir (string): The directory containing the data.
+#  - out_dir (string): The output directory for results to be saved to.
 #  - all_conf (string or MemoryMappedDF): The memory mapped confounds.
 #  - IDPs (string or MemoryMappedDF): The memory mapped IDPs.
 #  - cluster_cfg (dict): Cluster configuration dictionary containing the type
 #                        of cluster we want to run (e.g. 'local', 'slurm', 
 #                        'sge',... etc) and the number of nodes we want to run 
 #                        on (e.g. '12').
+#  - logfile (string): A html filename for the logs to be print to.
+#  - MAXMEM (int): Maximum amount of memory (in bits) that the code is allowed
+#                  to work with. If MAXMEM is none (default) the code assumes
+#                  the SPM default of 2^32.
 #
 # -----------------------------------------------------------------------------
 #
@@ -41,15 +46,16 @@ from logio.loading import ascii_loading_bar
 #  - IDPs_deconf (MemoryMappedDF): Memory mapped deconfounded IDPs
 #
 # =============================================================================
-def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=None):
+def generate_nonlin_confounds(data_dir, out_dir, all_conf, IDPs, cluster_cfg, 
+                              logfile=None, MAXMEM=None):
 
     # Update log.
     my_log(str(datetime.now()) +': Stage 3: Generating nonlinear confounds.', mode='a', filename=logfile)
     my_log(str(datetime.now()) +': Constructing squared and inormal terms...', mode='a', filename=logfile)
     
     # Convert input to memory mapped dataframes if it isn't already
-    all_conf = switch_type(all_conf, out_type='MemoryMappedDF')
-    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
+    all_conf = switch_type(all_conf, out_type='MemoryMappedDF', out_dir=out_dir) 
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF', out_dir=out_dir) 
 
     # Confound groups we are interested in.
     conf_name = ['AGE', 'AGE_SEX', 'HEAD_SIZE',  'TE', 'STRUCT_MOTION', 
@@ -78,7 +84,8 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
     # -------------------------------------------------------------------------
 
     # Rough estimate of maximum memory (bytes)
-    MAXMEM = 2**32
+    if MAXMEM is None:
+        MAXMEM = 2**32
 
     # Get the number of subjects
     n_sub = len(sub_ids)
@@ -166,6 +173,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
                                                       all_conf_site,
                                                       mode='svd',
                                                       blksize=blksize,
+                                                      out_dir=out_dir,
                                                       logfile=logfile)
         
         # Reindex the dataframe to fill off-site values with zeros
@@ -235,7 +243,7 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
     # ---------------------------------------------------------
     
     # Create memory mapped df for non linear confounds
-    conf_nonlin = MemoryMappedDF(conf_nonlin)
+    conf_nonlin = MemoryMappedDF(conf_nonlin, directory=out_dir)
     
     # Loop through groups adding names
     for group in conf_name:
@@ -257,8 +265,8 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
     # ---------------------------------------------------------
 
     # Switch type to reduce transfer costs
-    all_conf = switch_type(all_conf, out_type='filename', fname=os.path.join(os.getcwd(),'temp_mmap','conf.dat'))
-    IDPs = switch_type(IDPs, out_type='filename', fname=os.path.join(os.getcwd(),'temp_mmap','IDPs.dat'))
+    all_conf = switch_type(all_conf, out_type='filename', fname=os.path.join(out_dir,'temp_mmap','conf.dat'), out_dir=out_dir) 
+    IDPs = switch_type(IDPs, out_type='filename', fname=os.path.join(out_dir,'temp_mmap','IDPs.dat'), out_dir=out_dir) 
     
     # Deconfound IDPs
     if cluster_cfg is None:
@@ -266,43 +274,44 @@ def generate_nonlin_confounds(data_dir, all_conf, IDPs, cluster_cfg, logfile=Non
         # Run nets deconfound and get output
         IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', 
                                                blksize=blksize, coincident=False, 
-                                               logfile=logfile)
+                                               out_dir=out_dir, logfile=logfile)
     
     else:
         
         # Run nets_deconfound
         IDPs_deconf = nets_deconfound_multiple(IDPs, all_conf, 'nets_svd', 
                                                cluster_cfg=cluster_cfg, blksize=blksize, 
-                                               coincident=False, logfile=logfile)
+                                               coincident=False, out_dir=out_dir, 
+                                               logfile=logfile)
     
     # Update log
     my_log(str(datetime.now()) +': Nonlinear terms deconfounded.', mode='r', filename=logfile)
     my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
     
     # Remove the shared version of confounds
-    if os.path.exists(os.path.join(os.getcwd(),'temp_mmap','conf.dat')):  
+    if os.path.exists(os.path.join(out_dir,'temp_mmap','conf.dat')):  
 
         # Change back to memory map
-        all_conf = switch_type(os.path.join(os.getcwd(),'temp_mmap','conf.dat'), 
-                               out_type='MemoryMappedDF')
+        all_conf = switch_type(os.path.join(out_dir,'temp_mmap','conf.dat'), 
+                               out_type='MemoryMappedDF', out_dir=out_dir) 
 
         # Remove files
         all_conf.cleanup()
         del all_conf
 
     # Remove the shared version of IDPs
-    if os.path.exists(os.path.join(os.getcwd(),'temp_mmap','IDPs.dat')):  
+    if os.path.exists(os.path.join(out_dir,'temp_mmap','IDPs.dat')):  
 
         # Change back to memory map
-        IDPs = switch_type(os.path.join(os.getcwd(),'temp_mmap','IDPs.dat'), 
-                           out_type='MemoryMappedDF')
+        IDPs = switch_type(os.path.join(out_dir,'temp_mmap','IDPs.dat'), 
+                           out_type='MemoryMappedDF', out_dir=out_dir) 
 
         # Remove files
         IDPs.cleanup()
         del IDPs
     
     # Create memory mapped df for deconfounded IDPs
-    IDPs_deconf = MemoryMappedDF(IDPs_deconf)
+    IDPs_deconf = MemoryMappedDF(IDPs_deconf, directory=out_dir)
     
     # Update log
     my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)

@@ -31,21 +31,30 @@ class MemoryMappedDF:
     #
     #               String nans are stored as b'<na>' and converted back on read.
     #
-    #  - directory: The directory to store the internal memory map.
+    #  - directory: The directory to store the internal memory map (by default if None
+    #               data will be saved to a directory named "temp_memmap" in the current
+    #               directory).
     #  - get_nan_patterns: If true, the object will store a dictionary containing 
-    #                      the unique patterns of nan values in the columns.
+    #                      the unique patterns of nan values in the columns (This is
+    #                      currently unused/deprecated).
     #
     # ------------------------------------------------------------------------------
-    def __init__(self, dataframe, directory="temp_mmap", get_nan_patterns=False):
+    def __init__(self, dataframe, directory=None, get_nan_patterns=False):
         
         # Initialize dictionaries to hold memory maps, column headers, and data types
         self.memory_maps = {}
-        self.directory = os.path.join(os.getcwd(),directory)
         self.column_headers = {}
         self.data_types = {}
         self.shape = dataframe.shape
         self.type = 'Memory Mapped DataFrame'
         self.mode = 'r+'
+
+        # Check if we have an input directory
+        if directory is None:
+            directory = os.path.join(os.getcwd(),"temp_mmap")
+
+        # Save the directory
+        self.directory = directory
 
         # We assume by default that we don't want this memory map to stick around 
         # in our files if we delete it from memory.
@@ -145,6 +154,12 @@ class MemoryMappedDF:
     #
     #  - key: the slice indices for accessing the dataframe. Can use slices or names
     #         for columns. 
+    #
+    # ------------------------------------------------------------------------------
+    #
+    # And returns:
+    #
+    #  - pd.DataFrame: The data from the requested indexes.
     #
     # ------------------------------------------------------------------------------
     #
@@ -299,8 +314,8 @@ class MemoryMappedDF:
         
         # Cleanup the files
         self.cleanup()
-        
-        
+
+    
     # ------------------------------------------------------------------------------
     # Cleanup method which deletes all files associated to the memory map, and the 
     # memmap folder if needed.
@@ -327,13 +342,15 @@ class MemoryMappedDF:
                 
                 # Folder is empty, delete it
                 os.rmdir(self.directory)
-            
+
+    
     # ------------------------------------------------------------------------------
     # Running mmap.persist() sets the persist variable to true, which ensures that
     # the underlying memory map files are not deleted when the memory map is.
     # ------------------------------------------------------------------------------
     def persist(self):
         self.persist = True
+
     
     # ------------------------------------------------------------------------------
     # Running mmap.unpersist() sets the persist variable to false, which means that
@@ -341,7 +358,8 @@ class MemoryMappedDF:
     # ------------------------------------------------------------------------------
     def unpersist(self):
         self.persist = False
-        
+
+    
     # ------------------------------------------------------------------------------
     # The set group function allows us to setup quick access groups of variables. 
     # ------------------------------------------------------------------------------
@@ -378,8 +396,12 @@ class MemoryMappedDF:
         self.groups[group_name.lower()] = group_vals
         
     # ------------------------------------------------------------------------------
-    # The list group function allows us to quickly see the variable groups. If full
-    # is True, we list the variables as well.
+    # The list group function allows us to quickly see the variable groups. 
+    # ------------------------------------------------------------------------------
+    #
+    # It takes as inputs:
+    # - full (boolean): If full is True, we list the variables as well.
+    #
     # ------------------------------------------------------------------------------
     def list_groups(self, full=False):
 
@@ -399,9 +421,17 @@ class MemoryMappedDF:
     # The get group function allows us to quickly access groups of variables by name 
     # ------------------------------------------------------------------------------
     #
+    # It takes as inputs:
+    #
     # - group_names (list, str): The name or names of the groups we want to access
     # - row_slice: row indices for the data we want (if left blank, all data for 
-    #              these variables are returned)
+    #              these variables is returned)
+    #
+    # ------------------------------------------------------------------------------
+    #
+    # It returns:
+    # - pd.Dataframe: A pandas dataframe containing the variables in the listed
+    #                 groups for the given row indices.
     #
     # ------------------------------------------------------------------------------
     def get_groups(self, group_names, row_slice=None):
@@ -438,8 +468,20 @@ class MemoryMappedDF:
             # Return selected rows for group variables
             return(self[row_slice,var_names])
 
+    
     # ------------------------------------------------------------------------------
     # Search columns with a unix style regular expression
+    # ------------------------------------------------------------------------------
+    #
+    # This function takes as inputs:
+    # - reg_exp (str): A regular expression string.
+    #
+    # ------------------------------------------------------------------------------
+    # 
+    # It returns as outputs:
+    # - pd.Dataframe: A dataframe whose column names match the given regular 
+    #                 expression.
+    #
     # ------------------------------------------------------------------------------
     def search_cols(self, reg_exp):
 
@@ -447,11 +489,26 @@ class MemoryMappedDF:
         matched_strings = [item for item in self.columns if fnmatch.fnmatch(item, reg_exp)]
 
         return(self[:,matched_strings])
-          
+
+    
     # ------------------------------------------------------------------------------
     # Save to file
     # ------------------------------------------------------------------------------
-    def save(self, fname=None):
+    #
+    # This function takes as inputs:
+    # - fname (str, optional): Filename to output to, if set to None (default), a 
+    #                          filename with a random hash is generated.
+    # - overwrite (boolean, optional): If true, we overwrite self with the copy, and
+    #                                  delete all files associated with self. 
+    #
+    # ------------------------------------------------------------------------------
+    # 
+    # It returns as outputs:
+    # - fname (str): The filename data was saved to (useful when saving to a random
+    #                hash).
+    #
+    # ------------------------------------------------------------------------------
+    def save(self, fname=None, overwrite=False):
 
         # If the filename is not none
         if fname is not None:
@@ -527,6 +584,13 @@ class MemoryMappedDF:
         # Release the file lock
         os.remove(fname + ".lock")
         os.close(f)
+
+        # If we're overwriting, we delete the original version, and replace with the copy
+        if overwrite:
+            
+            # Delete original self
+            self.persist=False
+            self.cleanup()
 
         # Return the filename
         return(fname)

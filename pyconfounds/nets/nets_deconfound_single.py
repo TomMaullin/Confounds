@@ -34,6 +34,8 @@ from memmap.addBlockToMmap import addBlockToMmap
 #  - demean (boolean): If true, all data will be demeaned before and after
 #                      deconfounding.
 #  - dtype: Output datatype (default np.float64)
+#  - out_dir (string): The output directory for results to be saved to. If set to
+#                      None (default), current directory is used.
 #  - out_fname (str): Filename to output to (only necessary if return_df is
 #                     False).
 #  - return_df (boolean): If true the result is returned as a pandas df,
@@ -47,12 +49,13 @@ from memmap.addBlockToMmap import addBlockToMmap
 #     
 # ==========================================================================
 def nets_deconfound_single(y, conf, columns, mode='nets_svd', demean=True, 
-                           dtype=np.float64, out_fname=None, return_df=False):
+                           dtype=np.float64, out_dir=None, out_fname=None, 
+                           return_df=False):
     
     # Switch types to save transfer costs 
-    conf = switch_type(conf, out_type="pandas") # Only time all data is read in
+    conf = switch_type(conf, out_type="pandas", out_dir=out_dir) # Only time all data is read in
     if type(y) == str:
-        y = switch_type(y,out_type="MemoryMappedDF")
+        y = switch_type(y,out_type="MemoryMappedDF", out_dir=out_dir)
     
     # Get dimensions we are ouputting to
     out_dim = y.shape

@@ -57,6 +57,8 @@ from logio.loading import ascii_loading_bar
 #  - return_result (boolean): If true, results are returned as Pandas dataframe.
 #                             Otherwise results are saved to a numpy memorymap
 #                             named according to out_fname.
+#  - out_dir (string): The output directory for results to be saved to. If set to
+#                      None (default), current directory is used.
 #  - out_fname (string): Filename to output results to. If set to none (default),
 #                        a new output name is made using a random hash.
 #  - log_file (string): Filename to output log messages to. If set to none
@@ -70,27 +72,35 @@ from logio.loading import ascii_loading_bar
 # ==========================================================================
 def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float64', 
                              cluster_cfg=None, blksize=1, coincident=True, idx_y=None,
-                             return_result=True, out_fname=None, logfile=None):
-    
-    # ----------------------------------------------------------------------------
-    # Format data
-    # ----------------------------------------------------------------------------
-
-    # Switch type to save transfer costs (we need all of conf in memory)
-    conf = switch_type(conf, out_type='pandas')
-    y = switch_type(y, out_type='MemoryMappedDF')
+                             return_result=True, out_dir=None, out_fname=None, logfile=None):
 
     # ----------------------------------------------------------------------------
     # Create output filename
     # ----------------------------------------------------------------------------
+
+    # Check if out_dir is none
+    if out_dir is None:
+        out_dir = os.getcwd()
+
+    # Check we have a temporary memmap directory
+    if not os.path.exists(os.path.join(out_dir, 'temp_mmap')):
+        os.makedirs(os.path.join(out_dir, 'temp_mmap'))
 
     # If the output filename is none create it
     if out_fname is None:
 
         # Y deconfounded filename with a hashkey added to multiple runs of the code
         # interfering with one another
-        out_fname = os.path.join(os.getcwd(), 'temp_mmap',
+        out_fname = os.path.join(out_dir, 'temp_mmap',
                                  'y_deconf_' + str(uuid.uuid4()) + '.dat')
+        
+    # ----------------------------------------------------------------------------
+    # Format data
+    # ----------------------------------------------------------------------------
+
+    # Switch type to save transfer costs (we need all of conf in memory)
+    conf = switch_type(conf, out_type='pandas',out_dir=out_dir)
+    y = switch_type(y, out_type='MemoryMappedDF',out_dir=out_dir)
     
     # ----------------------------------------------------------------------------
     # Compute blocks
@@ -113,8 +123,8 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
     if cluster_cfg is not None:
         
         # Save conf and y for distribution (note: we aren't writing over the original y and conf here)
-        conf_fname = switch_type(conf, out_type='filename')
-        y_fname = switch_type(y, out_type='filename')
+        conf_fname = switch_type(conf, out_type='filename',out_dir=out_dir)
+        y_fname = switch_type(y, out_type='filename',out_dir=out_dir)
         
         # Connect the cluster
         cluster, client = connect_to_cluster(cluster_cfg)
@@ -129,6 +139,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
         scattered_blksize = client.scatter(blksize)
         scattered_coincident = client.scatter(coincident)
         scattered_return_result = client.scatter(False)
+        scattered_out_dir = client.scatter(out_dir)
         scattered_out_fname = client.scatter(out_fname)
         
         # Empty futures list
@@ -145,6 +156,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
                                      coincident=scattered_coincident,
                                      idx_y=block, 
                                      return_result=scattered_return_result,
+                                     out_dir=scattered_out_dir,
                                      out_fname=scattered_out_fname,
                                      pure=False)
             
@@ -196,7 +208,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
 
                 # Perform deconfounding
                 nets_deconfound_single(y, conf, columns, mode=mode, demean=True, 
-                                       dtype=np.float64, out_fname=out_fname)
+                                       dtype=np.float64, out_dir=out_dir, out_fname=out_fname)
 
         # If we're not running in coincident mode
         else:
@@ -206,7 +218,7 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
                 
                 # Perform deconfounding
                 nets_deconfound_single(y, conf, [y.columns[i]], mode=mode, demean=True, 
-                                       dtype=np.float64, out_fname=out_fname)
+                                       dtype=np.float64, out_dir=out_dir, out_fname=out_fname)
     
     # If we are returning the result, read it back in
     if return_result:

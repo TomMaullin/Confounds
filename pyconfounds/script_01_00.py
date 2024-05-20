@@ -15,6 +15,34 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 from logio.my_log import my_log
 from logio.loading import ascii_loading_bar
 
+# ======================================================================================
+#
+# The below function takes in a data directory of the form output by the data generation
+# stages of the matlab code linked below, and reads the image derived phenotypes in,
+# formatting them, sorting by date and saving various grouping variables.
+#
+# https://git.fmrib.ox.ac.uk/falmagro/ukb_unconfound_v2/-/tree/master?ref_type=heads
+#
+# --------------------------------------------------------------------------------------
+#
+# It takes the following inputs:
+# - data_dir (string): A directory containing the input data in the format of matlab 
+#                      output.
+# - out_dir (string): The output directory for results to be saved to.
+# - logfile (string): A html filename for the logs to be print to. If None, no logs are
+#                     output.
+# 
+# --------------------------------------------------------------------------------------
+#
+# It returns:
+# - IDPs (MemoryMappedDF): A memory mapped dataframe containing the Image Derived 
+#                          Phenotypes derived from the UK Biobank.
+# - nonIDPs (MemoryMappedDF): A memory mapped dataframe containing variables used later
+#                             in the pipeline that are neither confounds nor IDPs.
+# - misc (MemoryMappedDF): Miscellaneous variables (currently unused in the pipeline, 
+#                          only retained for completeness).
+#
+# ======================================================================================
 def generate_initial_variables(data_dir, out_dir, logfile=None):
 
     # Update log
@@ -466,13 +494,13 @@ def generate_initial_variables(data_dir, out_dir, logfile=None):
     # ----------------------------------------------------------------------------------
 
     # Return IDPs dataframe
-    IDPs = MemoryMappedDF(IDPs)
+    IDPs = MemoryMappedDF(IDPs, directory=out_dir)
     
     # Return non-IDPs dataframe
-    nonIDPs = MemoryMappedDF(nonIDPs)
+    nonIDPs = MemoryMappedDF(nonIDPs, directory=out_dir)
     
     # Return miscellaneous dataframe
-    misc = MemoryMappedDF(misc)
+    misc = MemoryMappedDF(misc, directory=out_dir)
 
     # Update
     my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)

@@ -1,17 +1,23 @@
 import os
 
+# ------------------------------------------------------------------------------
+#
+# The below function writes a message to an HTML log file with a header, basic
+# formatting, and styling.
+#
+# ------------------------------------------------------------------------------
+#
+# It takes as inputs:
+#
+#     message (str): The message to be written.
+#     mode (str, optional): The mode to open the file with. 'a' for append, 
+#                           'r' for replace current line. Defaults to 'a'.
+#     filename (str, optional): The name of the HTML file. Defaults to None 
+#                               (no output).
+#
+# ------------------------------------------------------------------------------
+
 def my_log(message, mode='a',filename=None):
-    """
-    Write a message to an HTML file with a header, basic formatting, and styling.
-
-    Args:
-        message (str): The message to be written.
-        mode (str, optional): The mode to open the file with. 'a' for append, 'r' for replace current line. Defaults to 'a'.
-        filename (str, optional): The name of the HTML file. Defaults to None (no output).
-
-    Returns:
-        None
-    """
     
     # Check if file is in use
     fileLocked = True

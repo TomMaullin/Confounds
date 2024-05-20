@@ -28,11 +28,14 @@ from nets.nets_percentile import nets_percentile
 # - ve (filename or MemoryMappedDF): The variance explained memory map.
 # - nonlinear_confounds (filename or MemoryMappedDF): The non-linear confounds
 #                                                     memory map.
+# - out_dir (string): The output directory for results to be saved to.
+# - logfile (string): A html filename for the logs to be print to. If None, 
+#                     no logs are output.
 #
 # -----------------------------------------------------------------------------
 #
-# It then thresholds the variance explained and saves a number of files with 
-# the results. It returns:
+# It then thresholds the variance explained and saves the nonlinear confounds 
+# which survive the thresholding process. It returns:
 # - nonlinear_confounds_reduced (MemoryMappedDF): The nonlinear confounds which
 #                                                 survived thresholding.
 #
@@ -43,9 +46,13 @@ def threshold_ve(ve, nonlinear_confounds, out_dir, logfile=None):
     my_log(str(datetime.now()) +': Stage 5: Thresholding variance explained.', mode='a', filename=logfile)
     my_log(str(datetime.now()) +': Loading and thresholding...', mode='a', filename=logfile)
     
+    # Check we have a temporary memmap directory
+    if not os.path.exists(os.path.join(out_dir, 'temp_mmap')):
+        os.makedirs(os.path.join(out_dir, 'temp_mmap'))
+
     # Convert input to memory mapped dataframes if it isn't already
-    ve = switch_type(ve, out_type='MemoryMappedDF')
-    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
+    ve = switch_type(ve, out_type='MemoryMappedDF',out_dir=out_dir)
+    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF',out_dir=out_dir)
     
     # Get the average and maximum variance explained
     avg_ve = ve[:,:].mean()
@@ -108,7 +115,7 @@ def threshold_ve(ve, nonlinear_confounds, out_dir, logfile=None):
     nonlinear_confounds_reduced = nonlinear_confounds[:,nonlin_list]
 
     # Memory map them
-    nonlinear_confounds_reduced = MemoryMappedDF(nonlinear_confounds_reduced)
+    nonlinear_confounds_reduced = MemoryMappedDF(nonlinear_confounds_reduced, directory=out_dir)
 
     # Add groupings
     groups = nonlinear_confounds.__dict__['groups']

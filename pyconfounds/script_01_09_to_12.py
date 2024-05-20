@@ -83,19 +83,59 @@ from script_01_12_to_15 import construct_and_deconfound_ct
 #
 # ------------------------------------------------------------------------------
 
-def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, data_dir, out_dir, cluster_cfg=None, logfile=None):
+
+# =============================================================================
+#
+# This function generates crossed confound terms, computes the amount of 
+# variance explained by the crossed terms in the IDPs and then reduces the set 
+# of crossed terms to a subset which explains most of the variance.
+#
+# -----------------------------------------------------------------------------
+# 
+# It takes the following inputs:
+#
+#  - IDPs (string or MemoryMappedDF): The memory mapped IDPs.
+#  - confounds (string or MemoryMappedDF): The memory mapped confounds.
+#  - nonlinear_confounds (string or MemoryMappedDF): The memory mapped nonlinear
+#                                                    confounds.
+#  - data_dir (string): The directory containing the data.
+#  - out_dir (string): The output directory for results to be saved to.
+#  - cluster_cfg (dict): Cluster configuration dictionary containing the type
+#                        of cluster we want to run (e.g. 'local', 'slurm', 
+#                        'sge',... etc) and the number of nodes we want to run 
+#                        on (e.g. '12').
+#  - logfile (string): A html filename for the logs to be print to. If None, no
+#                      logs are output.
+#  - MAXMEM (int): Maximum amount of memory (in bits) that the code is allowed
+#                  to work with. If MAXMEM is none (default) the code assumes
+#                  the SPM default of 2^32.
+#
+# -----------------------------------------------------------------------------
+#
+# It returns:
+#  - IDPs (MemoryMappedDF): Memory mapped IDPs deconfounded with initial terms.
+#  - confounds_with_ct (MemoryMappedDF): Confounds with crossed terms added.
+#
+# =============================================================================
+def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, 
+                                       data_dir, out_dir, cluster_cfg=None, 
+                                       logfile=None, MAXMEM=None):
 
     # Update log
-    my_log(str(datetime.now()) +': Stage 5: Generating Crossed Terms.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 6: Generating Crossed Terms.', mode='a', filename=logfile)
     my_log(str(datetime.now()) +': Loading and preprocessing...', mode='a', filename=logfile)
     
+    # Check we have a temporary memmap directory
+    if not os.path.exists(os.path.join(out_dir, 'temp_mmap')):
+        os.makedirs(os.path.join(out_dir, 'temp_mmap'))
+
     # --------------------------------------------------------------------------
     # Check the confounds and nonlinear confounds are in a useful format.
     # --------------------------------------------------------------------------    
     # Convert input to memory mapped dataframes if it isn't already
-    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
-    confounds = switch_type(confounds, out_type='MemoryMappedDF')
-    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
+    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF',out_dir=out_dir)
+    confounds = switch_type(confounds, out_type='MemoryMappedDF',out_dir=out_dir)
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF',out_dir=out_dir)
 
     # --------------------------------------------------------------------------
     # Concatenate and store confounds
@@ -103,7 +143,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
 
     # Combine the two
     confounds_full = pd.concat([confounds[:,:],nonlinear_confounds[:,:]], axis=1)
-    confounds_full = MemoryMappedDF(confounds_full)
+    confounds_full = MemoryMappedDF(confounds_full, directory=out_dir)
 
     # Add groupings
     groups = {**confounds.__dict__['groups'],**nonlinear_confounds.__dict__['groups']}
@@ -178,7 +218,8 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # -------------------------------------------------------------------------
     
     # Rough estimate of maximum memory (bytes)
-    MAXMEM = 2**32
+    if MAXMEM is None:
+        MAXMEM = 2**32
 
     # Get the number of subjects
     n_sub = len(sub_ids)
@@ -195,13 +236,14 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # -------------------------------------------------------------------------
 
     # Switch type to reduce transfer costs
-    confounds_full = switch_type(confounds_full, out_type='filename')
-    IDPs = switch_type(IDPs, out_type='filename')
+    confounds_full = switch_type(confounds_full, out_type='filename',out_dir=out_dir)
+    IDPs = switch_type(IDPs, out_type='filename',out_dir=out_dir)
     
     # Deconfound IDPs
     IDPs = nets_deconfound_multiple(IDPs, confounds_full, 'nets_svd', 
                                     blksize=blksize, coincident=False,
-                                    cluster_cfg=cluster_cfg, logfile=logfile)
+                                    cluster_cfg=cluster_cfg, out_dir=out_dir,
+                                    logfile=logfile)
 
     # Update log
     my_log(str(datetime.now()) +': IDPs deconfounded.', mode='r', filename=logfile)
@@ -270,7 +312,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
         crossed_inds[site_idx[i]:site_idx[i+1],2] = np.concatenate([np.arange(i+1) for i in range(n_conf_per_site[i+1]-1)])
 
     # Save crossed inds as a memory map (The nan check is just an easy way of getting all indices).
-    addBlockToMmap(os.path.join(os.getcwd(),'temp_mmap', 'crossed_inds.dat'), 
+    addBlockToMmap(os.path.join(out_dir,'temp_mmap', 'crossed_inds.dat'), 
                    crossed_inds, np.where(~np.isnan(crossed_inds)),
                    crossed_inds.shape, dtype='int16')
 
@@ -284,7 +326,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # -------------------------------------------------------------------------
 
     # Switch type to reduce transfer costs
-    IDPs = switch_type(IDPs, out_type='filename')
+    IDPs = switch_type(IDPs, out_type='filename',out_dir=out_dir)
     
     # Get the number of blocks we are breaking computation into
     num_blks = int(np.ceil(n_ct/blksize))
@@ -297,8 +339,8 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     scattered_conf = client.scatter(confounds_full)
     scattered_IDPs = client.scatter(IDPs)
     scattered_data_dir = client.scatter(data_dir)
-    scattered_crossed_inds = client.scatter(os.path.join(os.getcwd(),'temp_mmap', 'crossed_inds.dat'))
-    scattered_mode = client.scatter('nets_svd')
+    scattered_out_dir = client.scatter(out_dir)
+    scattered_crossed_inds = client.scatter(os.path.join(out_dir,'temp_mmap', 'crossed_inds.dat'))
     scattered_blksize = client.scatter(blksize)
     
     # Empty futures list
@@ -315,8 +357,9 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
         future_i = client.submit(construct_and_deconfound_ct,
                                  scattered_IDPs, scattered_conf, 
                                  scattered_data_dir,
-                                 scattered_crossed_inds,
-                                 scattered_mode, scattered_blksize, 
+                                 scattered_out_dir,
+                                 scattered_crossed_inds, 
+                                 scattered_blksize, 
                                  block, pure=False)
     
         # Append to list 
@@ -353,11 +396,11 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     del client, cluster
 
     # Switch types back
-    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
-    confounds_full = switch_type(confounds_full, out_type='MemoryMappedDF')
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF',out_dir=out_dir)
+    confounds_full = switch_type(confounds_full, out_type='MemoryMappedDF',out_dir=out_dir)
     
     # Read in resulting variance explained and convert to dataframe
-    ve_ct = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've_ct.npy'), dtype=np.float64,
+    ve_ct = np.memmap(os.path.join(out_dir,'temp_mmap', 've_ct.npy'), dtype=np.float64,
                       shape=(IDPs.shape[1], n_ct),mode='r')[:,:]
     ve_ct = pd.DataFrame(ve_ct)
     
@@ -443,7 +486,8 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     # Perform deconfounding
     conf_ct_reduced = nets_deconfound_single(conf_ct_reduced, confounds, col_names, 
                                              mode='nets_svd', demean=True, 
-                                             dtype=np.float64, return_df=True)
+                                             dtype=np.float64, out_dir=out_dir,
+                                             return_df=True)
     
     # Remove computational zeros
     conf_ct_reduced[conf_ct_reduced.abs()<1e-10]=0
@@ -493,7 +537,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     
     # Create output memorymapped dataframe
     confounds_with_ct = pd.concat((confounds_full[:,:], conf_ct_reduced),axis=1)
-    confounds_with_ct = MemoryMappedDF(confounds_with_ct)
+    confounds_with_ct = MemoryMappedDF(confounds_with_ct, directory=out_dir)
 
     # Add groupings (This code is over-complicated but I left it this way in case we
     # ever want to output conf_ct_reduced as a MemoryMappedDF before this and give 
@@ -529,7 +573,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds, dat
     
     # Update log
     my_log(str(datetime.now()) +': Results saved.', mode='r', filename=logfile)
-    my_log(str(datetime.now()) +': Stage 5 complete.', mode='a', filename=logfile)
+    my_log(str(datetime.now()) +': Stage 6 complete.', mode='a', filename=logfile)
     
     # Return memory mapped dataframe and IDPs
     return(IDPs, confounds_with_ct)

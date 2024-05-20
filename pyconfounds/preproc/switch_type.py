@@ -19,6 +19,9 @@ from memmap.read_memmap_df import read_memmap_df
 #                   saved to file, 'MemoryMappedDF' for a memory mapped data-
 #                   frame object, 'numpy' for a numpy array or 'pandas' for
 #                   a pandas dataframe.
+# - out_dir (string): The output directory for MemoryMappedDFs to be stored in.
+#                     If set to None (default) then dfs will be saved in the 
+#                     current directory.
 # - fname (str): Filename to save the object to (only used when out_type=
 #                'filename').
 #
@@ -31,7 +34,7 @@ from memmap.read_memmap_df import read_memmap_df
 #
 # ----------------------------------------------------------------------------
 
-def switch_type(x,out_type='numpy',fname=None):
+def switch_type(x,out_type='numpy',out_dir=None,fname=None):
 
     # Check if the input is a string/file name
     if type(x) == str:
@@ -78,7 +81,7 @@ def switch_type(x,out_type='numpy',fname=None):
         elif out_type != 'pandas':
 
             # Convert to memory mapped df
-            x = MemoryMappedDF(x)
+            x = MemoryMappedDF(x,directory=out_dir)
             
             # If we want to convert to a file.
             if out_type == 'filename':

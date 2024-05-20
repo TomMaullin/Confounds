@@ -49,7 +49,41 @@ from logio.loading import ascii_loading_bar
 #                 func_01_05. 
 #
 # -------------------------------------------------------------------------------
-def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=None, dtype=np.float64, logfile=None, match_matlab=True):
+
+
+# =============================================================================
+#
+# This function computes and generates p-values for the variance explained by 
+# a set of nonlinear confounds in a set of IDPs (which have been previously
+# deconfounded using linear terms).
+#
+# -----------------------------------------------------------------------------
+# 
+# It takes the following inputs:
+#
+#  - data_dir (string): The directory containing the data.
+#  - out_dir (string): The output directory for results to be saved to.
+#  - nonlinear_confounds (string or MemoryMappedDF): The memory mapped nonlinear
+#                                                    confounds.
+#  - IDPs_deconf (string or MemoryMappedDF): The memory mapped IDPs, previously
+#                                            deconfounded by linear terms.
+#  - cluster_cfg (dict): Cluster configuration dictionary containing the type
+#                        of cluster we want to run (e.g. 'local', 'slurm', 
+#                        'sge',... etc) and the number of nodes we want to run 
+#                        on (e.g. '12').
+#  - dtype (object/string): The dtype to output data as (default np.float64).
+#  - logfile (string): A html filename for the logs to be print to.
+#
+# -----------------------------------------------------------------------------
+#
+# It returns:
+#
+#  - p (MemoryMappedDF): Memory mapped p values.
+#  - ve (MemoryMappedDF): Memory mapped variance explained.
+#
+# =============================================================================
+def get_p_vals_and_ve(data_dir, out_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=None, 
+                      dtype=np.float64, logfile=None):
 
     # Update log
     my_log(str(datetime.now()) +': Stage 4: Thresholding nonlinear confounds.', mode='a', filename=logfile)
@@ -59,9 +93,13 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     # Convert to memory mapped df (if not already)
     # --------------------------------------------------------------------------------
         
+    # Check we have a temporary memmap directory
+    if not os.path.exists(os.path.join(out_dir, 'temp_mmap')):
+        os.makedirs(os.path.join(out_dir, 'temp_mmap'))
+    
     # Convert input to memory mapped dataframes if it isn't already
-    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF')
-    IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF')
+    nonlinear_confounds = switch_type(nonlinear_confounds, out_type='MemoryMappedDF', out_dir=out_dir) 
+    IDPs_deconf = switch_type(IDPs_deconf, out_type='MemoryMappedDF', out_dir=out_dir) 
     
     # --------------------------------------------------------------------------------
     # Connect to the cluster
@@ -82,16 +120,19 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     
     # Switch type to reduce transfer costs
     nonlinear_confounds = switch_type(nonlinear_confounds, out_type='filename', 
-                                      fname=os.path.join(os.getcwd(),'temp_mmap','nonlinear_confounds.dat'))
+                                      fname=os.path.join(out_dir,'temp_mmap','nonlinear_confounds.dat'), 
+                                      out_dir=out_dir) 
     IDPs_deconf = switch_type(IDPs_deconf, out_type='filename', 
-                              fname=os.path.join(os.getcwd(),'temp_mmap','IDPs_deconf.dat'))
+                              fname=os.path.join(out_dir,'temp_mmap','IDPs_deconf.dat'), 
+                              out_dir=out_dir) 
 
     # Scatter the filenames
-    scattered_nonlinear_confounds = client.scatter(os.path.join(os.getcwd(),'temp_mmap','nonlinear_confounds.dat'))
-    scattered_IDPs_deconf = client.scatter(os.path.join(os.getcwd(),'temp_mmap','IDPs_deconf.dat'))
+    scattered_nonlinear_confounds = client.scatter(os.path.join(out_dir,'temp_mmap','nonlinear_confounds.dat'))
+    scattered_IDPs_deconf = client.scatter(os.path.join(out_dir,'temp_mmap','IDPs_deconf.dat'))
 
     # Scatter the directories
     scattered_data_dir = client.scatter(data_dir)
+    scattered_out_dir = client.scatter(out_dir)
     
     # --------------------------------------------------------------------------------
     # Run cluster jobs
@@ -109,7 +150,7 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
 
         # Run the i^{th} job.
         future_i = client.submit(func_01_05_gen_nonlin_conf, 
-                                 scattered_data_dir, i, 
+                                 scattered_data_dir, scattered_out_dir, i, 
                                  scattered_nonlinear_confounds, 
                                  scattered_IDPs_deconf, pure=False)
 
@@ -137,25 +178,21 @@ def get_p_vals_and_ve(data_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=No
     del i, completed, futures, future_i
     
     # Create p memory mapped df
-    p = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 'p.npy'),dtype=dtype,
+    p = np.memmap(os.path.join(out_dir,'temp_mmap', 'p.npy'),dtype=dtype,
                    shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
     p = pd.DataFrame(p,index=indices,columns=columns)
-    p = MemoryMappedDF(p)
+    p = MemoryMappedDF(p, directory=out_dir)
     
     # Create ve memory mapped df
-    ve = np.memmap(os.path.join(os.getcwd(),'temp_mmap', 've.npy'),dtype=dtype,
+    ve = np.memmap(os.path.join(out_dir,'temp_mmap', 've.npy'),dtype=dtype,
                    shape=(num_IDPs, num_conf_nonlin),mode='r')[:,:]
     ve = pd.DataFrame(ve,index=indices,columns=columns)
-
-    # If we are matching matlab we replace columns with all nan values with zero
-    # if match_matlab:
-    #     ve[ve.columns[ve.isna().all()].tolist()]=0
     
     # Save as memory mapped dataframe
-    ve = MemoryMappedDF(ve)
+    ve = MemoryMappedDF(ve, directory=out_dir)
     
     # Remove original files
-    fnames = [os.path.join(os.getcwd(),'temp_mmap', 'p.npy'), os.path.join(os.getcwd(),'temp_mmap', 've.npy')]
+    fnames = [os.path.join(out_dir,'temp_mmap', 'p.npy'), os.path.join(out_dir,'temp_mmap', 've.npy')]
     
     # Loop through files removing each
     for fname in fnames:

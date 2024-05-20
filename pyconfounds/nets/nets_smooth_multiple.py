@@ -52,6 +52,8 @@ from logio.loading import ascii_loading_bar
 #  - return_result (boolean): If true, results are returned as Pandas dataframe.
 #                             Otherwise results are saved to a numpy memorymap
 #                             named according to out_fname.
+#  - out_dir (string): The output directory for results to be saved to. If set to
+#                      None (default), current directory is used.
 #  - out_fname (string): Filename to output results to. If set to none (default),
 #                        a new output name is made using a random hash.
 #  - log_file (string): Filename to output log messages to. If set to none
@@ -66,29 +68,37 @@ from logio.loading import ascii_loading_bar
 # ==========================================================================
 def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
                          blksize_time=1, cluster_cfg=None, idx_IDPs=None, 
-                         idx_time=None, return_result=True, out_fname=None,
-                         logfile=None):
+                         idx_time=None, return_result=True, out_dir=None,
+                         out_fname=None, logfile=None):
     
-    # ----------------------------------------------------------------------------
-    # Format data
-    # ----------------------------------------------------------------------------
-
-    # Switch type to save transfer costs
-    IDPs = switch_type(IDPs, out_type='MemoryMappedDF')
-    time = switch_type(time, out_type='pandas')
-
     # ----------------------------------------------------------------------------
     # Create output filename
     # ----------------------------------------------------------------------------
+
+    # Check if out_dir is none
+    if out_dir is None:
+        out_dir = os.getcwd()
+        
+    # Check we have a temporary memmap directory
+    if not os.path.exists(os.path.join(out_dir, 'temp_mmap')):
+        os.makedirs(os.path.join(out_dir, 'temp_mmap'))
 
     # If the output filename is none create it
     if out_fname is None:
 
         # IDPs smoothed filename with a hashkey added to multiple runs of the code
         # interfering with one another
-        out_fname = os.path.join(os.getcwd(), 'temp_mmap',
+        out_fname = os.path.join(out_dir, 'temp_mmap',
                                  'IDPs_smooth_' + str(uuid.uuid4()) + '.dat')
     
+    # ----------------------------------------------------------------------------
+    # Format data
+    # ----------------------------------------------------------------------------
+
+    # Switch type to save transfer costs
+    IDPs = switch_type(IDPs, out_type='MemoryMappedDF',out_dir=out_dir)
+    time = switch_type(time, out_type='pandas',out_dir=out_dir)
+
     # ----------------------------------------------------------------------------
     # Compute blocks
     # ----------------------------------------------------------------------------
@@ -120,8 +130,8 @@ def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
     if cluster_cfg is not None:
         
         # Save IDPs for distribution (note: we aren't writing over the original IDPs here)
-        IDPs_fname = switch_type(IDPs, out_type='filename')
-        time_fname = switch_type(time, out_type='filename')
+        IDPs_fname = switch_type(IDPs, out_type='filename',out_dir=out_dir)
+        time_fname = switch_type(time, out_type='filename',out_dir=out_dir)
         
         # Connect the cluster
         cluster, client = connect_to_cluster(cluster_cfg)
@@ -136,6 +146,7 @@ def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
         scattered_null_thresh = client.scatter(null_thresh)
         scattered_blksize = client.scatter(blksize)
         scattered_return_result = client.scatter(False)
+        scattered_out_dir = client.scatter(out_dir)
         scattered_out_fname = client.scatter(out_fname)
 
         # Empty futures list
@@ -154,6 +165,7 @@ def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
                                          scattered_blksize, idx_IDPs=block, 
                                          idx_time=time_block,
                                          return_result=scattered_return_result,
+                                         out_dir=scattered_out_dir,
                                          out_fname=scattered_out_fname,
                                          pure=False)
                 
@@ -204,7 +216,7 @@ def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
             nets_smooth_single(time, IDPs, sigma, columns=columns, 
                                time_reduced_inds=idx_time, 
                                null_thresh=null_thresh, dtype=np.float64, 
-                               out_fname=out_fname)
+                               out_dir=out_dir, out_fname=out_fname)
             
     # If we are returning the result, read it back in
     if return_result:

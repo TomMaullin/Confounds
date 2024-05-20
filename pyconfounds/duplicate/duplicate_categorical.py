@@ -179,7 +179,8 @@ def duplicate_categorical_deprecated(conf_name, ids, subject_indices_by_site, da
 # - confs_out (pd Dataframe): The new confound matrix.
 #
 # ==========================================================================
-def duplicate_categorical(conf_name, ids, subject_indices_by_site, data_dir, preserve_nans=False):
+def duplicate_categorical(conf_name, ids, subject_indices_by_site, data_dir, 
+                          preserve_nans=False):
     
     # Get the names of the confounds
     names_file = os.path.join(data_dir, '..', 'NAMES_confounds',f'{conf_name}.txt')

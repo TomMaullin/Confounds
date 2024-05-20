@@ -15,7 +15,32 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 from logio.my_log import my_log
 from logio.loading import ascii_loading_bar
 
-def generate_raw_confounds(data_dir, sub_ids, logfile=None):
+# ======================================================================================
+#
+# The below function takes in a data directory of the form output by the data generation
+# stages of the matlab code linked below, and reads the confounds in, formatting them,
+# sorting by date and saving various grouping variables.
+#
+# https://git.fmrib.ox.ac.uk/falmagro/ukb_unconfound_v2/-/tree/master?ref_type=heads
+#
+# --------------------------------------------------------------------------------------
+#
+# It takes the following inputs:
+# - data_dir (string): A directory containing the input data in the format of matlab 
+#                      output.
+# - out_dir (string): The output directory for results to be saved to.
+# - sub_ids (pd.Series): A list of subject IDs, indicating the row ordering for the 
+#                        final output dataframes.
+# - logfile (string): A html filename for the logs to be print to.
+# 
+# --------------------------------------------------------------------------------------
+#
+# It returns:
+# - confounds (MemoryMappedDF): A memory mapped dataframe containing the confound
+#                               variables derived from the UK Biobank.
+#
+# ======================================================================================
+def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
 
     # Update log
     my_log(str(datetime.now()) +': Stage 2: Generating Raw Confounds.', mode='a', filename=logfile)
@@ -195,7 +220,7 @@ def generate_raw_confounds(data_dir, sub_ids, logfile=None):
     confounds.index = sub_ids
     
     # Get confounds memory mapped dataframe
-    confounds = MemoryMappedDF(confounds)
+    confounds = MemoryMappedDF(confounds, directory=out_dir)
     
     # Quick access of site variables
     confounds.set_group('SITE', conf_site.columns.tolist())
