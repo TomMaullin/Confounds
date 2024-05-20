@@ -121,7 +121,25 @@ This repository has the following structure.
      - `create_nan_patterns.py`: Saves unique nan patterns from a dataframe to a list.
      - `format_constant_cols.py`: Helper function to decide what to do in the face of columns of only constant and/or nan values.
      - `nan_pattern.py`: Returns the pattern of NaN values in a column of data in a useful format.
-   - `nets`: 
+   - `nets`: This folder contains statistical methods, most of which are based on counterparts in the FSLnets matlab package.
+     - `nets_deconfound_multiple.py`: Parallelised deconfounding of IDPs. 
+     - `nets_deconfound_single.py`: Serial instance of decofounding IDPs.
+     - `nets_demean.py`: Demeans data columnwise.
+     - `nets_inverse_normal.py`: Performs inverse normal transformation of data columnwise.
+     - `nets_load_match.py`: Loads data and matches subject index.
+     - `nets_normalise.py`: Normalises data columnwise, ignoring NaNs.
+     - `nets_pearson.py`: Computes Pearson correlation.
+     - `nets_percentile.py`: Calculates the percentile of a numpy array, matching matlab conventions.
+     - `nets_rank_transform.py`: Performs inverse normal transform.
+     - `nets_smooth_multiple.py`: Parallelised smoothing of IDPs.
+     - `nets_smooth_single.py`: Serial instance of smoothing IDPs.
+     - `nets_svd.py`: Performs singular value decomposition of data.
+     - `nets_unique.py`: Adapted numpy unique code which also returns the permutation from argsort.
+   - `preproc`: Miscellaneous preprocessing functions.
+     - `datenum.py`: Gives a numerical representation of a date in (day, week, month) format.
+     - `days_in_year.py`: Gets the number of days in each of a list of years.
+     - `filter_columns_by_site.py`: Filters the columns of a dataframe to get site-specific confounds.
+     - `switch_type.py`: Switches between numpy, pandas, memory mapped dataframe and filenae datatypes.
  - `confounds.py`: Main module for running deconfounding code.
  - `.gitignore`: Specifies files and directories for Git to ignore.
  - `LICENSE`: Contains the licensing information for the project.

@@ -146,6 +146,9 @@ def _main(argv=None):
 
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
+
+        # Get the subject IDs
+        sub_ids = IDPs.index
             
         # Generate raw confounds
         confounds = generate_raw_confounds(data_dir, tmp_dir, sub_ids, logfile=logfile)
