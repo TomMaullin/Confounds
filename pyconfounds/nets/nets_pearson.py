@@ -1,22 +1,26 @@
 import numpy as np
 from scipy.stats import t
 
-# ----------------------------------------------------------------
+# ================================================================
 #
 # This was `my_nancorr` in the matlab version of the code. It 
-# computes the pearsn coefficient between x and y.
+# computes the pearson coefficient between x and y.
 #
 # ----------------------------------------------------------------
 #
 # It takes as inputs:
-# - x,y: numpy arrays, vectors to find correlation between.
+#
+# - x,y (numpy arrays): Vectors to find correlation between.
 #
 # ----------------------------------------------------------------
 #
 # And returns:
-# - R: The Pearson correlation coefficient.
 #
-# ----------------------------------------------------------------
+# - R (numpy array): The Pearson correlation coefficient.
+# - p (numpy array): p-value associated with Pearson correlation
+#                    coefficient.
+#
+# ================================================================
 def nets_pearson(x,y):
     
     # Number of elements

@@ -10,8 +10,6 @@ import numpy as np
 #
 # This function takes the following inputs:
 #
-# ----------------------------------------------------------------------------
-#
 # - `fname`: An absolute path to the mmap file.
 # - `block`: The block of values to write to the mmap.
 # - `blockInds`: The indices representing the entries `block` should be 

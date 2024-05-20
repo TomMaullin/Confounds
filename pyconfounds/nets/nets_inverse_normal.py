@@ -41,7 +41,7 @@ from nets.nets_rank_transform import nets_rank_transform
 #
 # Returns:
 #
-# - Transformed data as a numpy array.
+# - transformed_data (np.array): Transformed data as a numpy array.
 #
 # ==========================================================================
 def nets_inverse_normal(data, constant=None, method=None, is_quantitative=False,

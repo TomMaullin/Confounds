@@ -1,17 +1,26 @@
 from memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------
-# Filters columns based on the specified site number.
 #
-# Parameters:
+# Filters columns of a dataframe based on the specified site
+# number.
+#
+# ------------------------------------------------------------
+#
+# This function takes as inputs:
+#
 # - df: pandas.DataFrame or Memory Mapped Dataframe to filter.
 # - site_number: The site number to filter columns by.
 # - return_df: If true the filtered dataframe is returned, else
 #              just the list of columns
 #
-# Returns:
+# ------------------------------------------------------------
+#
+# It returns:
+#
 # - A DataFrame with only the columns that match the specified
 #   site number, or just the column headers for the dataframe.
+#
 # ------------------------------------------------------------
 def filter_columns_by_site(df, site_number, return_df=True):
     

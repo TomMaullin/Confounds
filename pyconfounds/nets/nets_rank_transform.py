@@ -7,18 +7,21 @@ from nets.nets_unique import nets_unique
 
 # ==========================================================================
 #
-# Helper function to apply the transformation to data without NaNs.
+# This function applys rank-based inverse normal transformation to input 
+# data.
 #
 # --------------------------------------------------------------------------
 #
 # Parameters:
-# - data (numpy array): Data without NaNs.
+#
+# - data (np.array): Data (assumed to be without NaNs).
 # - constant (float): Constant to be used in the transformation.
 #
 # --------------------------------------------------------------------------
 #
 # Returns:
-# - Transformed data.
+#
+# - transformed_data (np.array): Transformed data.
 #
 # ==========================================================================
 def nets_rank_transform(data, constant):

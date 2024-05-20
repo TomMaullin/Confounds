@@ -5,14 +5,21 @@ from memmap.MemoryMappedDF import MemoryMappedDF
 
 # ------------------------------------------------------------------------------
 #
-# Helper function to get row indices where all columns have no nans
+# Helper function to get indices where of columns in data which have no nan 
+# values.
 #
 # ------------------------------------------------------------------------------
 #
 # Inputs:
-#  - x (numpy array or memory mapped df): data to get nan patterns from
+#  - x (np.array or memory mapped df): data to get nan patterns from
 #  - safeMode (boolean): If true, we assume the data is too large to be read 
 #                        into memory and instead read in column by column.
+#
+# ------------------------------------------------------------------------------
+#
+# Returns:
+#   - nan_array (np.array): Boolean array representing columns with no nan
+#                           values.
 #
 # ------------------------------------------------------------------------------
 def all_non_nan_inds(x, safeMode=False):

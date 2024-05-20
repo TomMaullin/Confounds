@@ -47,8 +47,8 @@ import numpy as np
 #       The permutation obtained by running argsort on the original array. 
 #       Only provided if `return_perm` is True.
 #
-# *The addition of these arguments is the only difference between this 
-#  function and that used for numpy's unique.
+# *The addition of these arguments/outputs is the only difference between
+#  this function and that used for numpy's unique.
 # ==========================================================================
 def nets_unique(ar, return_index=False, return_inverse=False,
                     return_counts=False, return_perm=False):
@@ -57,29 +57,59 @@ def nets_unique(ar, return_index=False, return_inverse=False,
     """
     ar = np.asanyarray(ar).flatten()
 
+    # Check for optional indices
     optional_indices = return_index or return_inverse
 
+    # If we have optional indices
     if optional_indices:
+
+        # perform argsort with quicksort if we need the index,
+        # mergesort otherwise
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
+
+    # Otherwise we dont need index
     else:
+
+        # Run internal sort
         ar.sort()
         aux = ar
+
+    # Get mask for returning outputs
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
     mask[1:] = aux[1:] != aux[:-1]
 
+    # Initial return values
     ret = (aux[mask],)
+
+    # Add index if returning
     if return_index:
         ret += (perm[mask],)
+
+    # Add inverse if returning
     if return_inverse:
+
+        # Get inverse using permutation
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
+
+        # Add it to output
         ret += (inv_idx,)
+
+    # If we are returning value counts 
     if return_counts:
+
+        # Compute value counts
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
+
+    # If we are returning the permutation
     if return_perm:
+
+        # Add it to the outputs
         ret += (perm,)
+
+    # Return results
     return ret

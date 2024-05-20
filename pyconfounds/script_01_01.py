@@ -54,7 +54,6 @@ def generate_raw_confounds(data_dir, sub_ids, logfile=None):
     # Delete the indices
     del indices
 
-
     # ----------------------------------------------------------------------------------
     # Construct confounds for between sites
     # ----------------------------------------------------------------------------------

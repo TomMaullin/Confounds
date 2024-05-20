@@ -10,7 +10,8 @@ from nantools.format_constant_cols import format_constant_cols
 # --------------------------------------------------------------------------
 #
 # Parameters:
-#  - x (np.array): Input array to normalize.
+#
+#  - x (np.array/pd.Dataframe/pd.Series): Input data to normalize.
 #  - constant (np.float): If x contains any constant columns, all non-NaN 
 #                         values in these columns will be set to the 
 #                         constant rather than NaN. e.g. below is an example
@@ -30,8 +31,9 @@ from nantools.format_constant_cols import format_constant_cols
 # --------------------------------------------------------------------------
 #
 # Returns:
-#  - np.array: Normalized array with mean removed and scaled to unit
-#              variance.
+#
+#  - x (np.array/pd.Dataframe/pd.Series): Normalized array with mean removed
+#                                         and scaled to unit variance.
 #     
 # ==========================================================================
 def nets_normalise(x, constant=np.NaN, mode='preserve'):

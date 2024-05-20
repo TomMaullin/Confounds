@@ -9,7 +9,10 @@ from memmap.addBlockToMmap import addBlockToMmap
 
 # ==========================================================================
 #
-# Regresses conf out of y.
+# Regresses conf out of y (or "deconfound y"). This code is called to mainly
+# by nets_deconfound_multiple, which first decides how to parallelise 
+# computation and then calls this function on each determined "chunk" of
+# data.
 # 
 # --------------------------------------------------------------------------
 #
@@ -20,6 +23,7 @@ from memmap.addBlockToMmap import addBlockToMmap
 #                                               same pattern of nan values.
 #  - conf (MemoryMappedDF, filename or pandas df): Variables to regress out
 #                                                  of y.
+#  - columns (list of str): The columns of y to deconfound.
 #  - mode (string): The mode of computation to use for computating betahat,
 #                   current options are 'pinv' which does pinv(conf.T @ conf)
 #                   @ conf.T, 'svd' which uses an svd based approach or 'qr'
@@ -27,7 +31,6 @@ from memmap.addBlockToMmap import addBlockToMmap
 #                   which performs an svd on conf.T @ conf. Note: pinv is not
 #                   recommended as it is less robust to ill-conditioned
 #                   matrices. 
-#  - columns (list of str): The columns of y to deconfound.
 #  - demean (boolean): If true, all data will be demeaned before and after
 #                      deconfounding.
 #  - dtype: Output datatype (default np.float64)
@@ -40,7 +43,7 @@ from memmap.addBlockToMmap import addBlockToMmap
 # --------------------------------------------------------------------------
 #
 # Returns:
-#  - np.array: Deconfounded y (Output saved to file if running parallel).
+#  - pd.Dataframe: Deconfounded y (Output saved to file if running parallel).
 #     
 # ==========================================================================
 def nets_deconfound_single(y, conf, columns, mode='nets_svd', demean=True, 

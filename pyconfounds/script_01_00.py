@@ -368,7 +368,8 @@ def generate_initial_variables(data_dir, out_dir, logfile=None):
         'SEX': sex,
         'HEADSIZE': np.where(np.isnan(all_IDPs.iloc[:, 17]), np.nan, all_IDPs.iloc[:, 16]),
         'TOD': day_fraction,
-        'FST2': FS_use_T2
+        'FST2': FS_use_T2,
+        'SCAN_DATE': scan_date
     })
 
     # Create the data directory if it doesn't exist

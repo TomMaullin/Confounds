@@ -11,10 +11,11 @@ import pandas as pd
 # ------------------------------------------------------------------------------
 #
 # Parameters:
-# - data: pandas DataFrame, numpy array, or pandas Series. The input data.
-# - c: numeric, default np.NaN. The constant value to fill the columns with, if 
+#
+# - data (pd.DataFrame, np.array, or pd.Series). The input data.
+# - c (numeric, default np.NaN): The constant value to fill the columns with, if 
 #      mode is 'fill'.
-# - mode: str, either 'fill', 'drop', 'preserve' or 'pass'. Determines the 
+# - mode (str): Either 'fill', 'drop', 'preserve' or 'pass'. Determines the 
 #         operation on constant columns. Here is example behaviour for the 
 #         each mode, for a single column, with constant=c.
 #
@@ -26,8 +27,9 @@ import pandas as pd
 # ------------------------------------------------------------------------------
 #
 # Returns:
-# - The modified data, in its original format, with constant columns either 
-#   filled or dropped.
+#
+# - The modified data (pd.DataFrame, np.array, or pd.Series) with constant
+#   columns either filled or dropped.
 #
 # ------------------------------------------------------------------------------
 def format_constant_cols(data, c=np.NaN, mode='fill'):

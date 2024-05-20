@@ -60,6 +60,18 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     # Deconfound IDPs
     # -------------------------------------------------------------------------
 
+    # We first remove the IDPs columns that are more than 50% nan
+    IDPs = switch_type(IDPs, out_type='pandas') 
+    
+    # Calculate the percentage of NaN values in each column
+    nan_pct = IDPs.isna().mean()
+    
+    # Create a boolean mask for columns to keep
+    cols_to_keep = nan_pct[nan_pct <= 0.5].index
+    
+    # Return a new DataFrame with only the columns to keep
+    IDPs = IDPs[cols_to_keep]
+
     # Update log
     my_log(str(datetime.now()) +': Data loaded and preprocessed.', mode='r', filename=logfile)
     my_log(str(datetime.now()) +': Deconfounding IDPs...', mode='a', filename=logfile)
@@ -166,7 +178,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
         IDPs_for_site = IDPs_deconf.iloc[inds_site,:]
         
         # Get the acquisition times for this site
-        times_for_site = conf_acq_time_linear.iloc[inds_site,:]
+        times_for_site = nonIDPs[:,'SCAN_DATE'].iloc[inds_site,:]#MARKER conf_acq_time_linear.iloc[inds_site,:]
         
         # Smooth the IDPs
         smoothed_IDPs_for_site = nets_smooth_multiple(times_for_site, IDPs_for_site, sigma,
@@ -330,7 +342,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir, clu
     conf_acq_time_dict = {}
      
     # Update log
-    my_log(str(datetime.now()) +': Time ordered IDPs smoothed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Time ordered IDPs smoothed.', mode='a', filename=logfile)
     my_log(str(datetime.now()) +': Computing variance explained...', mode='a', filename=logfile)
     
     # Loop through sites

@@ -22,7 +22,10 @@ from logio.loading import ascii_loading_bar
 # ==========================================================================
 #
 # Regresses conf out of y, handling missing data. Demeans data unless
-# specified.
+# specified. This function takes in the data and decides how to parallelize 
+# the deconfounding of multiple variables. Once it has decided how to chunk
+# the computation, the deconfounding itself is performed on each single
+# chunk using nets_deconfound_single.
 # 
 # --------------------------------------------------------------------------
 #
@@ -38,9 +41,6 @@ from logio.loading import ascii_loading_bar
 #                   recommended as it is less robust to ill-conditioned
 #                   matrices. 
 #  - demean (boolean): If true, y and conf is demeaned.
-#  - check_nan_patterns (boolean): If true, the code will check if the
-#                                  confounds can be grouped by the patterns 
-#                                  of missingness they contain.
 #  - dtype: Output datatype (default np.float64)
 #  - cluster_cfg: dictionary containing configuration details for 
 #                 parallelisation. If set to None, it is assumed no 
@@ -54,20 +54,23 @@ from logio.loading import ascii_loading_bar
 #                          once for each column of y.
 #  - idx_y (list/range): Indices for the columns of y we are deconfounding. 
 #                        If set to None, all columns are deconfounded.
-#  - return_result (boolean): If true, results are returned as MemoryMappedDFs.
+#  - return_result (boolean): If true, results are returned as Pandas dataframe.
+#                             Otherwise results are saved to a numpy memorymap
+#                             named according to out_fname.
 #  - out_fname (string): Filename to output results to. If set to none (default),
 #                        a new output name is made using a random hash.
+#  - log_file (string): Filename to output log messages to. If set to none
+#                       (default), no log messages are output.
 #   
 # --------------------------------------------------------------------------
 #
 # Returns:
-#  - np.array: Deconfounded y (Output saved to file if running parallel).
+#  - pd.Dataframe: Deconfounded y (Output saved to file if running parallel).
 #     
 # ==========================================================================
 def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float64', 
                              cluster_cfg=None, blksize=1, coincident=True, idx_y=None,
-                             return_result=True, out_fname=None, logfile=None,
-                             match_matlab=True):
+                             return_result=True, out_fname=None, logfile=None):
     
     # ----------------------------------------------------------------------------
     # Format data
@@ -217,16 +220,6 @@ def nets_deconfound_multiple(y, conf, mode='nets_svd', demean=True, dtype='float
     
         # Initialise output dataframe
         deconf_out = pd.DataFrame(deconf_out, index=y.index,columns=y.columns,dtype=dtype)
-
-        # Check if we are matching the matlab output (the original matlab code
-        # kept zero columns in the data which can impact later steps)
-        if not match_matlab: 
-            
-            # Drop all columns with zeros
-            non_zero_cols = (deconf_out.abs() > 1e-8).sum(axis=0) >= 5#deconf_out.any(axis=0) 
-            
-            # Filter out zero columns using the mask
-            deconf_out = deconf_out.loc[:, non_zero_cols]
             
         # Return result
         return(deconf_out)

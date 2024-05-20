@@ -1,13 +1,23 @@
+# -------------------------------------------------------------------
+#
+# The below function generates an ASCII loading bar based on the
+# given percentage.
+#
+# -------------------------------------------------------------------
+#
+# It takes as inputs:
+#
+#     percentage (float): The percentage value (between 0 and 100).
+#
+# -------------------------------------------------------------------
+#
+# Returns:
+#
+#     str: The ASCII loading bar string.
+#
+# -------------------------------------------------------------------
 def ascii_loading_bar(percentage):
-    """
-    Generate an ASCII loading bar based on the given percentage.
 
-    Args:
-        percentage (float): The percentage value (between 0 and 100).
-
-    Returns:
-        str: The ASCII loading bar string.
-    """
     # Ensure the percentage is within the valid range
     percentage = max(0, min(100, percentage))
 
@@ -25,4 +35,4 @@ def ascii_loading_bar(percentage):
     # Combine the loading bar and percentage
     loading_bar = f"{bar} {percentage_str}"
 
-    return loading_bar
+    return(loading_bar)

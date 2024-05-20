@@ -4,7 +4,7 @@ import pandas as pd
 
 # ==========================================================================
 #
-# Demean input array x by removing the mean and scaling to unit variance.
+# Demean input array x by removing the mean (ignoring NaNs).
 # 
 # --------------------------------------------------------------------------
 #
@@ -16,7 +16,6 @@ import pandas as pd
 # Returns:
 #  - x (pandas df): Demeaned array with mean removed and scaled to unit
 #                   variance.
-#  - 
 #     
 # ==========================================================================
 def nets_demean(x):

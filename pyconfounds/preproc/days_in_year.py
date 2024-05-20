@@ -1,9 +1,23 @@
 import numpy as np
 
-# ------------------------------------------------------------
+# -------------------------------------------------------------------
 # The below gives the number of days for each year in a given
 # array of years.
-# ------------------------------------------------------------
+#
+# -------------------------------------------------------------------
+#
+# It takes as input:
+#
+# - years (np.array): an np array of years e.g. np.array([2021,2024])
+#
+# -------------------------------------------------------------------
+#
+# It returns:
+#
+# - days (np.array): the number of days in each year e.g.
+#                     np.array([365,366])
+#
+# -------------------------------------------------------------------
 def days_in_year(years):
     
     # Work out the leap years

@@ -9,6 +9,21 @@ import numpy as np
 # https://stackoverflow.com/questions/58424704/output-produced-by-python-numpy-percentile-not-same-as-matlab-prctile
 #
 # ---------------------------------------------------------
+# 
+# It takes as inputs:
+#
+#  - x (np.array): The data to find the percentile from.
+#  - p (float/numeric): The percentile to find, between 0
+#                       and 100.
+#
+# ---------------------------------------------------------
+#
+# It returns:
+#
+# - float/numeric: The percentile p from the data x (matlab
+#                  version).
+#
+# ---------------------------------------------------------
 def nets_percentile(x, p):
 
     # Make sure we have any array

@@ -13,8 +13,6 @@ import pandas as pd
 #
 # The function takes in the following inputs:
 #
-# --------------------------------------------------------------------------
-#
 #  - file (str): File name of data file.
 #  - ids (np array): Array containing subject ids whose data we want.
 #  - del_first_col (boolean): If true this will delete the original subject
@@ -30,10 +28,8 @@ import pandas as pd
 #
 # The function returns:
 #
-# --------------------------------------------------------------------------
-#
-#  - data_merged: numpy array, matched data with optional transformations
-#                 applied.
+#  - data_merged (pd.Dataframe): Matched data with optional transformations
+#                                applied.
 # 
 # ==========================================================================
 def nets_load_match(file, ids, del_first_col=True, dtypes=None, 

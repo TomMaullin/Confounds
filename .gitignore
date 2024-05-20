@@ -15,3 +15,5 @@ pyconfounds/*/.ipynb_checkpoints
 saved_memmaps*
 slurm*
 store*
+*log.html
+*/*log.html

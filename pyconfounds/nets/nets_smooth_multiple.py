@@ -17,14 +17,51 @@ from logio.loading import ascii_loading_bar
 
 # ==========================================================================
 #
+# Smooths variables and timepoints in IDPs, handling missing data. This
+# function takes in the data and decides how to parallelize the smoothing
+# of multiple variables. Once it has decided how to chunk the computation,
+# the actual smoothing itself is performed on each single chunk using
+# nets_smooth_single.
+# 
 # --------------------------------------------------------------------------
 #
 # Parameters:
-#  - 
+#  - time (MemoryMappedDF, filename or pandas df): The times at which data 
+#                                                  was recorded (used for 
+#                                                  smoothing weights).
+#  - IDPs (MemoryMappedDF, filename or pandas df): data to be smoothed. 
+#  - sigma (scalar/float): Smoothing kernel sigma.
+#  - null_thresh (float): For evaluation points far from data points, the
+#                         estimate will be based on very little data. If the
+#                         total weight is below this threshold, return
+#                         np.nan at this location. Zero means always 
+#                         return an estimate. The default of 0.6 corresponds
+#                         to approximately one standard deviation away from
+#                         the nearest datapoint.
+#  - blksize (int): The number of columns of IDPs to be smoothed. This is
+#                   chosen to preserve memory.
+#  - blksize_time (int): The number of timepoints to smooth (rows in IDPs). 
+#                        This is also chosen to preserve memory.
+#  - cluster_cfg: dictionary containing configuration details for 
+#                 parallelisation. If set to None, it is assumed no 
+#                 parallelisation should be performed.
+#  - idx_IDPs (list/range): Indices for the columns of IDPs we are smoothing. 
+#                           If set to None, all columns are smoothed.
+#  - idx_time (list/range): Indices for the rows of IDPs (timepoints) we are
+#                           smoothing. If set to None, all rows are smoothed.
+#  - return_result (boolean): If true, results are returned as Pandas dataframe.
+#                             Otherwise results are saved to a numpy memorymap
+#                             named according to out_fname.
+#  - out_fname (string): Filename to output results to. If set to none (default),
+#                        a new output name is made using a random hash.
+#  - log_file (string): Filename to output log messages to. If set to none
+#                       (default), no log messages are output.
 #   
 # --------------------------------------------------------------------------
 #
 # Returns:
+#  - smooth_out (pd.Dataframe): The requested smoothed data for the variables
+#                               and timepoints specified.
 #
 # ==========================================================================
 def nets_smooth_multiple(time, IDPs, sigma, null_thresh=0.6, blksize=1,
