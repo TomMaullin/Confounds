@@ -38,7 +38,7 @@ def my_log(message, mode='a',filename=None):
             # Writing filelines
             with open(filename, 'w+', encoding='utf-8') as file:
                 if not lines:  # If the file is empty, create the HTML structure
-                    file.write('<!DOCTYPE html>\n<html>\n<head>\n<title>Confounds Log</title>\n')
+                    file.write('<!DOCTYPE html>\n<html>\n<head><meta http-equiv="refresh" content="10">\n<title>Confounds Log</title>\n')
                     file.write('<style>\nbody { font-family: Arial, sans-serif; margin: 20px; background-color: #e6f0ff; }\n')
                     file.write('h1 { color: #333; position: sticky; top: 0; background-color: #e6f0ff; padding: 10px; }\n')
                     file.write('hr { border: none; border-top: 1px solid #ccc; margin: 10px 0; }\n</style>\n</head>\n<body>\n<h1>Confounds Log</h1>\n<hr>\n')
@@ -57,7 +57,7 @@ def my_log(message, mode='a',filename=None):
                     file.writelines(lines)
         except FileNotFoundError:
             with open(filename, 'w', encoding='utf-8') as file:
-                file.write('<!DOCTYPE html>\n<html>\n<head>\n<title>Confounds Log</title>\n')
+                file.write('<!DOCTYPE html>\n<html>\n<head><meta http-equiv="refresh" content="10">\n<title>Confounds Log</title>\n')
                 file.write('<style>\nbody { font-family: Arial, sans-serif; margin: 20px; background-color: #e6f0ff; }\n')
                 file.write('h1 { color: #333; position: sticky; top: 0; background-color: #e6f0ff; padding: 10px; }\n')
                 file.write('hr { border: none; border-top: 1px solid #ccc; margin: 10px 0; }\n</style>\n</head>\n<body>\n<h1>Confounds Log</h1>\n<hr>\n')

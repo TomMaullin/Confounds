@@ -1,12 +1,13 @@
 # PyConfounds
 
-This repository contains the code for UK Biobank Deconfounding python code.
+This repository contains the code for UK Biobank Deconfounding python code. For best performance, this code should be run on a high performance computing cluster.
 
 ## Requirements
 To use the pyconfounds code, please pip install like so:
 
 ```
-pip install pyconfounds
+git clone git@github.com:TomMaullin/Confounds.git
+pip install .
 ```
 
 You must also set up your `dask-jobqueue` configuration file, which is likely located at `~/.config/dask/jobqueue.yaml`. This will require you to provide some details about your HPC system. See [here](https://jobqueue.dask.org/en/latest/configuration-setup.html#managing-configuration-files) for further detail. For instance, if you are using rescomp your `jobqueue.yaml` file may look something like this:
@@ -87,16 +88,16 @@ pyconfounds <name_of_your_yaml_file>.yml
 You can watch your analysis progress either by checking the `logfile` (see above). To do so, run the following command:
 
 ```
-
+cd /path/to/log/html/
+python -m http.server <remote port>
 ```
-
-In a seperate terminal, you must then tunnel into your HPC as follows:
+where `<remote port>` is the port you want to host the file on (e.g. `8701`). In a seperate terminal, you must then tunnel into your HPC as follows:
 
 ```
 ssh -L <local port>:localhost:<remote port> username@hpc_address
 ```
 
-where the local port is the port you want to view on your local machine and the remote port is port hosting the html log file.
+where the local port is the port you want to view on your local machine and the remote port is port hosting the html log file. You should now be able to access the HTML log file in browser by opening `http://localhost:<local port>/<your log file>.html`.
 
 ### Structure of the repository
 

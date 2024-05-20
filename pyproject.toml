@@ -1,0 +1,19 @@
+[project]
+name = "confounds"
+dynamic = ["version"]
+description = "Python implementation of the fMRIb UK Biobank confounds code."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "Apache License Version 2.0"}
+requires-python = ">=3.8"
+authors = [{name = "Tom Maullin", email = "tommaullin@gmail.com"}]
+dependencies = [
+  "dask==2024.3.0",
+  "dask-jobqueue==0.8.5",
+  "numpy==1.26.4",
+  "pandas==2.2.2",
+  "scipy==1.13.0"
+]
+
+
+[project.scripts]
+pyconfounds = "pyconfounds.confounds:_main"
