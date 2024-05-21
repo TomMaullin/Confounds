@@ -7,6 +7,7 @@ To use the pyconfounds code, please pip install like so:
 
 ```
 git clone git@github.com:TomMaullin/Confounds.git
+cd confounds
 pip install .
 ```
 

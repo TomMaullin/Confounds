@@ -169,12 +169,9 @@ def _main(argv=None):
 
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
-        
-        # Set cluster configuration
-        local_cluster = {'cluster_type':'local','num_nodes':12}
     
         # Generate non linear confounds and deconfound IDPs
-        nonlinear_confounds, IDPs_deconf = generate_nonlin_confounds(data_dir, tmp_dir, confounds, IDPs, local_cluster, logfile=logfile)
+        nonlinear_confounds, IDPs_deconf = generate_nonlin_confounds(data_dir, tmp_dir, confounds, IDPs, cluster_cfg, logfile=logfile)
     
         # Save the results as files we can reconstruct memory mapped dataframes from
         nonlinear_confounds_fname = os.path.join(out_dir,'saved_memmaps','nonlinear_confounds.npz')
@@ -197,13 +194,10 @@ def _main(argv=None):
 
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
-            
-        # Set cluster configuration
-        dask_cluster = {'cluster_type':'slurm','num_nodes':100}
     
         # Generate non linear confounds and deconfound IDPs
         p, ve = get_p_vals_and_ve_cluster(data_dir, tmp_dir, nonlinear_confounds, 
-                                          IDPs_deconf, cluster_cfg=dask_cluster, 
+                                          IDPs_deconf, cluster_cfg=cluster_cfg, 
                                           logfile=logfile)
     
         # Create filenames for memory mapped dataframes to save
@@ -244,13 +238,10 @@ def _main(argv=None):
 
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
-
-        # Set cluster configuration
-        dask_cluster = {'cluster_type':'slurm','num_nodes':100}
         
         # Work out crossed confounds
         IDPs_deconf_ct, confounds_with_ct = generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds_reduced, 
-                                                                               data_dir, tmp_dir, cluster_cfg=dask_cluster, 
+                                                                               data_dir, tmp_dir, cluster_cfg=cluster_cfg, 
                                                                                logfile=logfile)
         
         # Create filenames for memory mapped dataframes to save
@@ -272,13 +263,10 @@ def _main(argv=None):
 
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
-
-        # Set cluster configuration
-        dask_cluster = {'cluster_type':'slurm','num_nodes':100}
         
         # Get smoothed confounds
         IDPs_deconf_smooth, confounds_with_smooth = generate_smoothed_confounds(IDPs, confounds_with_ct, nonIDPs, data_dir, 
-                                                                                tmp_dir, dask_cluster, logfile=logfile)
+                                                                                tmp_dir, cluster_cfg, logfile=logfile)
         
         # Create filenames for memory mapped dataframes to save
         IDPs_deconf_smooth_fname = os.path.join(out_dir,'saved_memmaps','IDPs_deconf_smooth.npz')
