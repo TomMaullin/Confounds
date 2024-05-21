@@ -1,5 +1,6 @@
 import os  
 import time
+import warnings
 import numpy as np  
 import pandas as pd
 from scipy.stats import f  
@@ -67,6 +68,10 @@ def get_p_vals_and_ve(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_de
                       method=1, dtype=np.float64, p_fname=None, ve_fname=None,
                       return_df=False):
     
+    # Suppress the divide by zero warning
+    warnings.filterwarnings('ignore', r'invalid value encountered in divide')
+    warnings.filterwarnings('ignore', r'divide by zero encountered in divide')
+
     # --------------------------------------------------------------------------------
     # Convert to appropriate datatype. If we have a filename for a memory mapped 
     # dataframe we want to read it in as a memory mapped df (after all it is already 
