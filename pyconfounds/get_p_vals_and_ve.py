@@ -25,6 +25,8 @@ from pyconfounds.preproc.filter_columns_by_site import filter_columns_by_site
 #
 # This function computes various statistics and metrics related to non-linear
 # confounds and image derived phenotypes (IDPs) for a given index (IDP_index).
+# This script was previously named script_01_05, reflecting the original 
+# matlab code.
 #
 # -----------------------------------------------------------------------------
 # 
@@ -61,9 +63,9 @@ from pyconfounds.preproc.filter_columns_by_site import filter_columns_by_site
 # to the matlab function func_01_05_gen_nonlin_conf.m.
 #
 # =============================================================================
-def func_01_05_gen_nonlin_conf(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_deconf,
-                               method=1, dtype=np.float64, p_fname=None, ve_fname=None,
-                               return_df=False):
+def get_p_vals_and_ve(data_dir, out_dir, IDP_index, nonlinear_confounds, IDPs_deconf,
+                      method=1, dtype=np.float64, p_fname=None, ve_fname=None,
+                      return_df=False):
     
     # --------------------------------------------------------------------------------
     # Convert to appropriate datatype. If we have a filename for a memory mapped 

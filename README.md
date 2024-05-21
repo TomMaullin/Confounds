@@ -104,6 +104,15 @@ where the local port is the port you want to view on your local machine and the 
 This repository has the following structure.
 
  - `pyconfounds`: Contains the main Python package code.
+   - `generate_initial_variables.py`: Reads in and generates a dataframe of IDPs.
+   - `generate_raw_confounds.py`: Reads in and generates a dataframe of confounds.
+   - `generate_nonlin_confounds.py`: Generates nonlinear confounds.
+   - `get_p_vals_and_ve_cluster.py`: Parallelized computation of p-values and ve for nonlinear confounds.
+   - `get_p_vals_and_ve.py`: Serial computation of p-values and ve for nonlinear confounds.
+   - `threshold_ve.py`: Thresholds variance explained.
+   - `generate_crossed_confounds_cluster.py`: Generates the crossed confounds via parallelised computation.
+   - `construct_and_deconfound_ct.py`: Constructs and deconfounds a block of crossed terms in serial.
+   - `generate_smoothed_confounds.py`: Generates smoothed confounds, by date and time.
    - `dask_tools`: This folder contains the helper functions used to interface with dask.
      - `connect_to_cluster.py`: Handles cluster connection for specified cluster_cfgs.
    - `duplicate`: Contains code for constructing site level (duplicated) confounds.

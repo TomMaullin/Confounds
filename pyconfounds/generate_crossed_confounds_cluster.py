@@ -21,11 +21,11 @@ from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 
 from pyconfounds.dasktools.connect_to_cluster import connect_to_cluster
 
-from pyconfounds.script_01_12_to_15 import construct_and_deconfound_ct
+from pyconfounds.construct_and_deconfound_ct import construct_and_deconfound_ct
 
 # ------------------------------------------------------------------------------
-# This code is based on the matlab version of the confounds code which has the
-# below structure:
+# This script was previously named script_01_09_to_12, reflecting the original
+# matlab code, which had the below structure:
 # ------------------------------------------------------------------------------
 # - script_01_09_gen_ct_conf_gpu_no_cluster.m*
 #       Creates crossed confounds, regresses all other confounds out of them,
@@ -63,10 +63,10 @@ from pyconfounds.script_01_12_to_15 import construct_and_deconfound_ct
 # *script not used.
 # **script not called directly from general.m.
 # ------------------------------------------------------------------------------
-# The updated code has been refactored for ease and now has the below structure.
+# The updated code has been refactored and now has the below structure.
 # ------------------------------------------------------------------------------
 #
-# - script_01_09_to_12.py
+# - generate_crossed_confounds_cluster.py
 #    This file contains a single high level function which handles all cluster 
 #    interaction, cleanup and file handling. This covers the functionality that
 #    was previously found in:
@@ -75,7 +75,7 @@ from pyconfounds.script_01_12_to_15 import construct_and_deconfound_ct
 #       script_01_12_gen_ct_conf.sh, script_01_13_gen_ct_conf.m
 #       script_01_14_gen_ct_conf.sh, script_01_15_gen_ct_conf.m
 #
-# - script 01_12_to_15.py
+# - generate_crossed_confounds.py
 #    This file contains the code submitted for a single job. It covers the
 #    functionality previously found in:
 #

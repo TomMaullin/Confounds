@@ -6,13 +6,13 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from pyconfounds.script_01_00 import generate_initial_variables
-from pyconfounds.script_01_01 import generate_raw_confounds
-from pyconfounds.script_01_02 import generate_nonlin_confounds
-from pyconfounds.script_01_03_to_4 import get_p_vals_and_ve
-from pyconfounds.script_01_06_to_8 import threshold_ve
-from pyconfounds.script_01_09_to_12 import generate_crossed_confounds_cluster
-from pyconfounds.script_01_16 import generate_smoothed_confounds
+from pyconfounds.generate_initial_variables import generate_initial_variables
+from pyconfounds.generate_raw_confounds import generate_raw_confounds
+from pyconfounds.generate_nonlin_confounds import generate_nonlin_confounds
+from pyconfounds.get_p_vals_and_ve_cluster import get_p_vals_and_ve_cluster
+from pyconfounds.threshold_ve import threshold_ve
+from pyconfounds.generate_crossed_confounds_cluster import generate_crossed_confounds_cluster
+from pyconfounds.generate_smoothed_confounds import generate_smoothed_confounds
 
 from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 from pyconfounds.memmap.read_memmap_df import read_memmap_df 
@@ -202,7 +202,9 @@ def _main(argv=None):
         dask_cluster = {'cluster_type':'slurm','num_nodes':100}
     
         # Generate non linear confounds and deconfound IDPs
-        p, ve = get_p_vals_and_ve(data_dir, tmp_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=dask_cluster, logfile=logfile)
+        p, ve = get_p_vals_and_ve_cluster(data_dir, tmp_dir, nonlinear_confounds, 
+                                          IDPs_deconf, cluster_cfg=dask_cluster, 
+                                          logfile=logfile)
     
         # Create filenames for memory mapped dataframes to save
         p_fname = os.path.join(out_dir,'saved_memmaps','p.npz')

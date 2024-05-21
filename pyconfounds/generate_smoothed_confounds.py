@@ -25,6 +25,9 @@ from pyconfounds.nets.nets_deconfound_multiple import nets_deconfound_multiple
 # the IDPs. The resulting components are added to the confounds matrix and 
 # returned.
 #
+# This script was previously named script_01_16, reflecting the original matlab
+# code.
+#
 # -----------------------------------------------------------------------------
 # 
 # It takes the following inputs:

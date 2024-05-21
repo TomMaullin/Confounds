@@ -9,13 +9,14 @@ from pyconfounds.preproc.switch_type import switch_type
 from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 from pyconfounds.dasktools.connect_to_cluster import connect_to_cluster
 
-from pyconfounds.script_01_05 import func_01_05_gen_nonlin_conf
+from pyconfounds.get_p_vals_and_ve import get_p_vals_and_ve
 
 from pyconfounds.logio.my_log import my_log
 from pyconfounds.logio.loading import ascii_loading_bar
 
 # -------------------------------------------------------------------------------
-# The layout of scripts 03-06 has changed substantially from the original matlab.
+# This script was previously named script_01_03-04, reflecting the original matlab
+# code, but the layout of scripts 03-06 has changed substantially from the priginal.
 # -------------------------------------------------------------------------------
 # 
 # The original (matlab) file outline was as follows:
@@ -37,16 +38,17 @@ from pyconfounds.logio.loading import ascii_loading_bar
 # 
 # The new outline is as follows:
 #
-# - script_01_03_to_4: This python script sets up a cluster instance and submits
-#                      the code in script_01_05.py to the cluster as a seperate
-#                      job for each IDP. The number of nodes is not hard-coded,
-#                      but instead is set by a user-defined option in cluster_cfg.
-#                      This python script absorbs the functionality of
-#                      script_01_03.m, script_01_05.sh and script_01_04.sh from 
-#                      the matlab repo.
+# - get_p_vals_and_ve_cluster: This python script sets up a cluster instance and 
+#                              submits the code in script_01_05.py to the cluster
+#                              as a seperate job for each IDP. The number of nodes
+#                              is not hard-coded, but instead is set by a user-
+#                              defined option in cluster_cfg. This python script 
+#                              absorbs the functionality of script_01_03.m, 
+#                              script_01_05.sh and script_01_04.sh from the 
+#                              matlab repo.
 #
-# - script_01_05: This python script is a direct translation of the matlab script
-#                 func_01_05. 
+# - get_p_vals_and_ve: This python script is a direct translation of the matlab 
+#                      script func_01_05. 
 #
 # -------------------------------------------------------------------------------
 
@@ -82,8 +84,8 @@ from pyconfounds.logio.loading import ascii_loading_bar
 #  - ve (MemoryMappedDF): Memory mapped variance explained.
 #
 # =============================================================================
-def get_p_vals_and_ve(data_dir, out_dir, nonlinear_confounds, IDPs_deconf, cluster_cfg=None, 
-                      dtype=np.float64, logfile=None):
+def get_p_vals_and_ve_cluster(data_dir, out_dir, nonlinear_confounds, IDPs_deconf, 
+                              cluster_cfg=None, dtype=np.float64, logfile=None):
 
     # Update log
     my_log(str(datetime.now()) +': Stage 4: Thresholding nonlinear confounds.', mode='a', filename=logfile)
@@ -149,7 +151,7 @@ def get_p_vals_and_ve(data_dir, out_dir, nonlinear_confounds, IDPs_deconf, clust
     for i in np.arange(num_IDPs):
 
         # Run the i^{th} job.
-        future_i = client.submit(func_01_05_gen_nonlin_conf, 
+        future_i = client.submit(get_p_vals_and_ve, 
                                  scattered_data_dir, scattered_out_dir, i, 
                                  scattered_nonlinear_confounds, 
                                  scattered_IDPs_deconf, pure=False)

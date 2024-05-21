@@ -23,6 +23,8 @@ from pyconfounds.logio.loading import ascii_loading_bar
 #
 # https://git.fmrib.ox.ac.uk/falmagro/ukb_unconfound_v2/-/tree/master?ref_type=heads
 #
+# This script was previously named script_01_01, reflecting the original matlab code.
+
 # --------------------------------------------------------------------------------------
 #
 # It takes the following inputs:

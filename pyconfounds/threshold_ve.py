@@ -14,12 +14,13 @@ from pyconfounds.nets.nets_percentile import nets_percentile
 # Script structure:
 # -------------------------------------------------------------------------------
 #
-# In the matlab version of this code, script_01_06 thresholded the variance
-# explained values and output those which remained after thresholding to the 
-# 'tables/UVE_nonlin.txt' file. Then the bash script script_01_07 sorted and
+# This script was previously named script_01_06_to_08, reflecting the original
+# matlab code. In the matlab version of this code, script_01_06 thresholded the 
+# variance explained values and output those which remained after thresholding to
+# the 'tables/UVE_nonlin.txt' file. Then the bash script script_01_07 sorted and
 # concatenated these tables.
 #
-# In the Python version, this is all done in script 01_07 below.
+# In the Python version, this is all done in the function below.
 # -------------------------------------------------------------------------------
 
 # =============================================================================

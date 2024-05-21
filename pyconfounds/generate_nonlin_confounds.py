@@ -21,6 +21,9 @@ from pyconfounds.logio.loading import ascii_loading_bar
 #
 # This function deconfounds the IDPs and generates the the nonlinear confounds.
 #
+# This script was previously named script_01_02, reflecting the original matlab
+# code.
+#
 # -----------------------------------------------------------------------------
 # 
 # It takes the following inputs:

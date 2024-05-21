@@ -1,8 +1,0 @@
-cluster_cfg:
-  cluster_type: sge
-  num_nodes: 100
-datadir: /path/to/data/directory/
-outdir: /path/to/output/directory/
-logfile: /path/to/log.html
-MAXMEM: 2**32
-

@@ -16,7 +16,7 @@ from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 from pyconfounds.preproc.switch_type import switch_type
 from pyconfounds.preproc.filter_columns_by_site import filter_columns_by_site
 
-from pyconfounds.script_01_05 import func_01_05_gen_nonlin_conf
+from pyconfounds.get_p_vals_and_ve import get_p_vals_and_ve
 
 
 # =============================================================================
@@ -25,6 +25,9 @@ from pyconfounds.script_01_05 import func_01_05_gen_nonlin_conf
 # confound terms. It then computes the variance explained by the crossed terms
 # in the IDPs. The resulting variance explained values, and associated p-values,
 # are then saved to memory maps named `p_ct.py` and `ve_ct.py`.
+#
+# This script was previously named script_01_12_to_15, reflecting the original
+# matlab code.
 #
 # -----------------------------------------------------------------------------
 # 
@@ -132,9 +135,8 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, out_dir, crossed_inds
     for block_IDP in blocks_IDPs:
         
         # Perform ve and p thresholding
-        ve, p = func_01_05_gen_nonlin_conf(data_dir, out_dir, block_IDP, 
-                                           conf_ct, IDPs, method=4,
-                                           return_df=True)
+        ve, p = get_p_vals_and_ve(data_dir, out_dir, block_IDP, conf_ct, IDPs, method=4,
+                                  return_df=True)
         
         # Indices for where to add to memmap
         indices = np.ix_(block_IDP,block)
