@@ -168,8 +168,8 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     conf_te                  = duplicate_demedian_norm_by_site('TE',               sub_ids, inds_per_site, data_dir) 
     
     # Update log
-    my_log(str(datetime.now()) +': Continuous variables demedianed.', mode='a', filename=logfile)
-    my_log(str(datetime.now()) +': Saving variable groupings...', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Continuous variables demedianed.', mode='r', filename=logfile)
+    my_log(str(datetime.now()) +': Saving variable groupings...', mode='a', filename=logfile)
     
     # Concatenate all the DataFrames/Series horizontally
     continuous_IDPs = pd.concat([

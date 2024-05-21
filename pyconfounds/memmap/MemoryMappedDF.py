@@ -336,12 +336,15 @@ class MemoryMappedDF:
                 
                     # Remove the file
                     os.remove(fname_dtype)
-                    
-            # Check if the output folder is empty
-            if os.listdir(self.directory) == []:
+
+            # Check if self.directory even exists
+            if os.path.exists(self.directory):
                 
-                # Folder is empty, delete it
-                os.rmdir(self.directory)
+                # Check if the output folder is empty
+                if os.listdir(self.directory) == []:
+                    
+                    # Folder is empty, delete it
+                    os.rmdir(self.directory)
 
     
     # ------------------------------------------------------------------------------
@@ -555,7 +558,7 @@ class MemoryMappedDF:
             mmap_fnames = {dtype: self.memory_maps[dtype].filename for dtype in self.memory_maps}
                 
         # Make a copy of self and change self_copy.memory_maps to the new filenames
-        self_copy = self.__class__(pd.DataFrame())
+        self_copy = self.__class__(pd.DataFrame(),directory=self.directory)
         self_copy.memory_maps = mmap_fnames
         self_copy.column_headers = self.column_headers
         self_copy.data_types = self.data_types

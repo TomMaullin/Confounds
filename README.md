@@ -150,6 +150,7 @@ This repository has the following structure.
      - `days_in_year.py`: Gets the number of days in each of a list of years.
      - `filter_columns_by_site.py`: Filters the columns of a dataframe to get site-specific confounds.
      - `switch_type.py`: Switches between numpy, pandas, memory mapped dataframe and filenae datatypes.
+     - `print_call_stack`: Helper function for debugging python errors.
  - `confounds.py`: Main module for running deconfounding code.
  - `config.yml`: Empty yaml configuration file.
  - `.gitignore`: Specifies files and directories for Git to ignore.
