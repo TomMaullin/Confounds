@@ -61,6 +61,7 @@ The following fields are optional:
 
  - `MAXMEM`: This is the maximum amount of memory (in bits) that the code is allowed to work with. How this should be set depends on your machine capabilities; the default value however matches the SPM default of 2^32 (note this must be in python notation i.e. `2**32`).
  - `logfile`:  A filepath for a html log file (e.g. `/path/to/folder/log.html`) which will show you the progress of the code.
+ - `output_dtype`: File type for output. Either `MemoryMappedDF` or `csv` (default: `csv`).
 
 #### Examples
 
@@ -99,6 +100,86 @@ ssh -L <local port>:localhost:<remote port> username@hpc_address
 ```
 
 where the local port is the port you want to view on your local machine and the remote port is port hosting the html log file. You should now be able to access the HTML log file in browser by opening `http://localhost:<local port>/<your log file>.html`. When parallelized computation is being performed using dask, the dask console address is displayed in the `log.html` file and can be accessed by porting in a similar manner to that described above.
+
+### Output
+
+Output from pyconfounds can be given in one of two ways; as a `csv` file, or as a collection of `MemoryMappedDF` `npz` files. A list of files output are as follows:
+
+
+| Filename  | Description  |
+|---|---|
+| `IDPs.csv(.npz)` | The initial IDPs. |
+| `nonIDPs.csv(.npz)` | Variables that are used but neither IDPs, nor confounds. |
+| `misc.csv(.npz)` | Miscellanous variables kept for posterity. |
+| `confounds.csv(.npz)` | The initial confounds. |
+| `nonconfounds.csv(.npz)` | The nonlinear confounds. |
+| `IDPs_deconf.csv(.npz)` | The IDPs after deconfounding with inital confounds. |
+| `p.csv(.npz)` | P-values for nonlinear confounds variance explained. |
+| `ve.csv(.npz)` | Variance explained for nonlinear confounds. |
+| `nonlinear_confounds_reduced.csv(.npz)` | Reduced nonlinear confounds. |
+| `IDPs_deconf_ct.csv(.npz)` |  The IDPs after deconfounding with nonlinear confounds. |
+| `confounds_with_ct.csv(.npz)` | The confounds with nonlinear and crossed terms. |
+| `IDPs_deconf_smooth.csv(.npz)` | The IDPs after deconfounding with nonlinear and crossed confounds. |
+| `confounds_with_smooth.csv(.npz)` | The confounds with nonlinear, crossed and smoothed terms.  |
+
+If data are output using the MemoryMappedDF format they may be read into python as follows:
+
+```
+# Import the MemoryMappedDF class
+from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
+
+# Read in MemoryMappedDF
+memory_mapped_df = read_memmap_df(<filename for dataframe>)
+```
+
+The memory mapped dataframe object can be indexed and manipulated in a Jupyter notebook in a number of ways. Here is some example usage:
+
+```
+Example usage:
+
+# Create a dataframe
+df = pd.DataFrame({
+            'A': range(1, 101),
+            'B': np.random.rand(100),
+            'C': np.random.randint(1, 100, size=100)
+        })
+
+# Memory mapped version
+memory_mapped_df = MemoryMappedDF(df)
+
+# Access all elements
+memory_mapped_df[:,:]
+
+# Access data using row index and column names
+memory_mapped_df[1:20, ['A', 'B']]
+
+# Access data using natural slicing syntax
+memory_mapped_df[1:20, 0:1]
+memory_mapped_df[1:20, 0]
+
+# Accessing a single entry
+memory_mapped_df[10, 'A']
+memory_mapped_df[3, 0]
+```
+
+The `MemoryMappedDF` has the advantage that it can store metadata such as groupings of variables. You can list variable groupings in the `MemoryMappedDF` object as follows:
+
+```
+memory_mapped_df.list_groups()
+```
+
+And retrieve groups of variables using:
+
+```
+memory_mapped_df.get_group(<group name>)
+```
+
+You can also search the columns using regular expressions:
+```
+memory_mapped_df.search_cols("Age*Site_*")
+```
+
+**Please note:** At present, the `MemoryMappedDF` class is saved across several files, so if you move files next to the main `npz` file, you may find the `MemoryMappedDF` can no longer be opened. Also, at present, the locations of files in the `MemoryMappedDF` objects are hard coded, so it is not recommended to move them around. 
 
 ### Structure of the repository
 

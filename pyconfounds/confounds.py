@@ -5,6 +5,7 @@ import tempfile
 import argparse
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 from pyconfounds.generate_initial_variables import generate_initial_variables
 from pyconfounds.generate_raw_confounds import generate_raw_confounds
@@ -16,6 +17,8 @@ from pyconfounds.generate_smoothed_confounds import generate_smoothed_confounds
 
 from pyconfounds.memmap.MemoryMappedDF import MemoryMappedDF
 from pyconfounds.memmap.read_memmap_df import read_memmap_df 
+
+from pyconfounds.logio.my_log import my_log
 
 # =====================================================================================
 #
@@ -86,6 +89,16 @@ def _main(argv=None):
         logfile = inputs['logfile']
     else:
         logfile = os.path.join(os.getcwd(), 'log.html')
+
+    # Type for output
+    if 'output_dtype' in inputs:
+        out_type = inputs['output_dtype']
+    else:
+        out_type = 'MemoryMappedDF'
+        
+    # Check if it is a valid type
+    if out_type.lower() != 'csv':
+        out_type = 'MemoryMappedDF'
 
     # Notify user
     print('Logs will be printed to ' + logfile)
@@ -205,8 +218,8 @@ def _main(argv=None):
         ve_fname = os.path.join(out_dir,'saved_memmaps','ve.npz')
     
         # Save the results (this is to move them outside of the temporary directory)
-        p.save(p_fname)
-        ve.save(ve_fname)
+        p.save(p_fname, overwrite=True)
+        ve.save(ve_fname, overwrite=True)
     
         # Read in saved p and ve
         p = read_memmap_df(p_fname)
@@ -226,7 +239,7 @@ def _main(argv=None):
         nonlinear_confounds_reduced_fname = os.path.join(out_dir,'saved_memmaps','nonlinear_confounds_reduced.npz')
     
         # Save memory mapped dataframe
-        nonlinear_confounds_reduced.save(nonlinear_confounds_reduced_fname)
+        nonlinear_confounds_reduced.save(nonlinear_confounds_reduced_fname, overwrite=True)
 
         # Read in saved
         nonlinear_confounds_reduced = read_memmap_df(nonlinear_confounds_reduced_fname)
@@ -249,8 +262,8 @@ def _main(argv=None):
         confounds_with_ct_fname = os.path.join(out_dir,'saved_memmaps','confounds_with_ct.npz')
     
         # Save memory mapped dataframes
-        IDPs_deconf_ct.save(IDPs_deconf_ct_fname)
-        confounds_with_ct.save(confounds_with_ct_fname)
+        IDPs_deconf_ct.save(IDPs_deconf_ct_fname, overwrite=True)
+        confounds_with_ct.save(confounds_with_ct_fname, overwrite=True)
     
         # Read in saved
         IDPs_deconf_ct = read_memmap_df(IDPs_deconf_ct_fname)
@@ -273,13 +286,122 @@ def _main(argv=None):
         confounds_with_smooth_fname = os.path.join(out_dir,'saved_memmaps','confounds_with_smooth.npz')
     
         # Save memory mapped dataframes
-        IDPs_deconf_smooth.save(IDPs_deconf_smooth_fname)
-        confounds_with_smooth.save(confounds_with_smooth_fname)
+        IDPs_deconf_smooth.save(IDPs_deconf_smooth_fname, overwrite=True)
+        confounds_with_smooth.save(confounds_with_smooth_fname, overwrite=True)
         
         # Read in saved
         IDPs_deconf_smooth = read_memmap_df(IDPs_deconf_smooth_fname)
         confounds_with_smooth = read_memmap_df(confounds_with_smooth_fname)
 
+    
+    # --------------------------------------------------------------------------------
+    # Save to csv
+    # --------------------------------------------------------------------------------
+    if out_type.lower() == 'csv':
+    
+        my_log(str(datetime.now()) +': Outputting results to csv...', mode='a', filename=logfile)
+    
+        # Make csv directory if it doesn't exist
+        if not os.path.exists(os.path.join(out_dir, 'saved_csv')):
+            os.makedirs(os.path.join(out_dir, 'saved_csv'))
+        
+        # CSV output filenames
+        IDPs_fname = os.path.join(out_dir,'saved_csv','IDPs.csv')
+        nonIDPs_fname = os.path.join(out_dir,'saved_csv','nonIDPs.csv')
+        misc_fname = os.path.join(out_dir,'saved_csv','misc.csv')
+        confounds_fname = os.path.join(out_dir,'saved_csv','confounds.csv')
+        nonlinear_confounds_fname = os.path.join(out_dir,'saved_csv','nonlinear_confounds.csv')
+        IDPs_deconf_fname = os.path.join(out_dir,'saved_csv','IDPs_deconf.csv')
+        p_fname = os.path.join(out_dir,'saved_csv','p.csv')
+        ve_fname = os.path.join(out_dir,'saved_csv','ve.csv')
+        nonlinear_confounds_reduced_fname = os.path.join(out_dir,'saved_csv','nonlinear_confounds_reduced.csv')
+        IDPs_deconf_ct_fname = os.path.join(out_dir,'saved_csv','IDPs_deconf_ct.csv')
+        confounds_with_ct_fname = os.path.join(out_dir,'saved_csv','confounds_with_ct.csv')
+        IDPs_deconf_smooth_fname = os.path.join(out_dir,'saved_csv','IDPs_deconf_smooth.csv')
+        confounds_with_smooth_fname = os.path.join(out_dir,'saved_csv','confounds_with_smooth.csv')
+        
+    
+        # Save the IDPs
+        IDPs.to_csv(IDPs_fname)
+        my_log(str(datetime.now()) +': Initial IDPs saved as: ' + IDPs_fname, mode='a', filename=logfile)
+        IDPs.unpersist()
+        del IDPs
+    
+        # Save the nonIDPs
+        nonIDPs.to_csv(nonIDPs_fname)
+        my_log(str(datetime.now()) +': NonIDPs saved as: ' + nonIDPs_fname, mode='a', filename=logfile)
+        nonIDPs.unpersist()
+        del nonIDPs
+        
+        # Save the misc
+        misc.to_csv(misc_fname)
+        my_log(str(datetime.now()) +': Miscellaneous varaibles saved as: ' + misc_fname, mode='a', filename=logfile)
+        misc.unpersist()
+        del misc
+        
+        # Save the confounds
+        confounds.to_csv(confounds_fname)
+        my_log(str(datetime.now()) +': Initial confounds saved as: ' + confounds_fname, mode='a', filename=logfile)
+        confounds.unpersist()
+        del confounds
+    
+        # Save the nonlinear confounds
+        nonlinear_confounds.to_csv(nonlinear_confounds_fname)
+        my_log(str(datetime.now()) +': Nonlinear confounds saved as: ' + nonlinear_confounds_fname, mode='a', filename=logfile)
+        nonlinear_confounds.unpersist()
+        del nonlinear_confounds
+            
+        # Save the deconfounded IDPs
+        IDPs_deconf.to_csv(IDPs_deconf_fname)
+        my_log(str(datetime.now()) +': IDPs (deconfounded with initial confounds) saved as: ' + IDPs_deconf_fname, mode='a', filename=logfile)
+        IDPs_deconf.unpersist()
+        del IDPs_deconf
+    
+        # Save the p-values
+        p.to_csv(p_fname)
+        my_log(str(datetime.now()) +': P-values (for nonlinear confounds variance explained) saved as: ' + p_fname, mode='a', filename=logfile)
+        p.unpersist()
+        del p
+    
+        # Save the variance explained
+        ve.to_csv(ve_fname)
+        my_log(str(datetime.now()) +': Variance explained (for nonlinear confounds) saved as: ' + ve_fname, mode='a', filename=logfile)
+        ve.unpersist()
+        del ve
+        
+        # Save reduced nonlinear confounds
+        nonlinear_confounds_reduced.to_csv(nonlinear_confounds_reduced_fname)
+        my_log(str(datetime.now()) +': Reduced nonlinear confounds saved as: ' + nonlinear_confounds_reduced_fname, mode='a', filename=logfile)
+        nonlinear_confounds_reduced.unpersist()
+        del nonlinear_confounds_reduced
+        
+        # Save deconfounded IDPs
+        IDPs_deconf_ct.to_csv(IDPs_deconf_ct_fname)
+        my_log(str(datetime.now()) +': IDPs (deconfounded with nonlinear confounds) saved as: ' + IDPs_deconf_ct_fname, mode='a', filename=logfile)
+        IDPs_deconf_ct.unpersist()
+        del IDPs_deconf_ct
+        
+        # Save confounds with crossed terms
+        confounds_with_ct.to_csv(confounds_with_ct_fname)
+        my_log(str(datetime.now()) +': Confounds (with crossed terms) saved as: ' + confounds_with_ct_fname, mode='a', filename=logfile)
+        confounds_with_ct.unpersist()
+        del confounds_with_ct
+    
+        # Save deconfounded IDPs
+        IDPs_deconf_smooth.to_csv(IDPs_deconf_smooth_fname)
+        my_log(str(datetime.now()) +': IDPs (deconfounded with smoothed confounds) saved as: ' + IDPs_deconf_smooth_fname, mode='a', filename=logfile)
+        IDPs_deconf_smooth.unpersist()
+        del IDPs_deconf_smooth
+        
+        # Save confounds with smooth terms
+        confounds_with_smooth.to_csv(confounds_with_smooth_fname)
+        my_log(str(datetime.now()) +': Confounds (with crossed terms) saved as: ' + confounds_with_smooth_fname, mode='a', filename=logfile)
+        confounds_with_smooth.unpersist()
+        del confounds_with_smooth
+        
+        # Remove memmap folder
+        if os.path.exists(os.path.join(out_dir, 'saved_memmaps')):
+            shutil.rmtree(os.path.join(out_dir, 'saved_memmaps'))
 
 if __name__ == "__main__":
     _main(sys.argv[1:])

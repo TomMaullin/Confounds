@@ -597,3 +597,18 @@ class MemoryMappedDF:
 
         # Return the filename
         return(fname)
+
+    
+    # ------------------------------------------------------------------------------
+    # Save to csv
+    # ------------------------------------------------------------------------------
+    #
+    # This function takes as inputs:
+    # - fname (str): Filename to output to.
+    #
+    # ------------------------------------------------------------------------------
+    def to_csv(self, fname):
+
+        # Output to CSV, including index and column names
+        self[:,:].to_csv(fname, index=True)
+
