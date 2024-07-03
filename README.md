@@ -3,7 +3,7 @@
 This repository contains the code for UK Biobank Deconfounding python code. For best performance, this code should be run on a high performance computing cluster.
 
 ## Requirements
-To use the pyconfounds code, please pip install like so:
+The pyconfounds code requires Python version 3.9.2 or higher to run. To use the pyconfounds code, please pip install like so:
 
 ```
 git clone https://github.com/TomMaullin/Confounds.git
