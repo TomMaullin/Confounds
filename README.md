@@ -6,7 +6,7 @@ This repository contains the code for UK Biobank Deconfounding python code. For 
 To use the pyconfounds code, please pip install like so:
 
 ```
-git clone https://github.com/TomMaullin/Confounds.git)
+git clone https://github.com/TomMaullin/Confounds.git
 cd Confounds
 pip install .
 ```
