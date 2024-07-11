@@ -179,6 +179,12 @@ You can also search the columns using regular expressions:
 memory_mapped_df.search_cols("Age*Site_*")
 ```
 
+If you wish to convert the `memory_mapped_df` to a csv you can do so using the following command:
+
+```
+memory_mapped_df.to_csv(filename_you_wish_to_save_to)
+```
+
 **Please note:** At present, the `MemoryMappedDF` class is saved across several files, so if you move files next to the main `npz` file, you may find the `MemoryMappedDF` can no longer be opened. Also, at present, the locations of files in the `MemoryMappedDF` objects are hard coded, so it is not recommended to move them around. 
 
 ### Structure of the repository
