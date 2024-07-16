@@ -484,7 +484,7 @@ def generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds,
     my_log(str(datetime.now()) +': Deconfounding reduced crossed terms...', mode='a', filename=logfile)
     
     # Perform deconfounding
-    conf_ct_reduced = nets_deconfound_single(conf_ct_reduced, confounds, col_names, 
+    conf_ct_reduced = nets_deconfound_single(conf_ct_reduced, confounds_full, col_names, 
                                              mode='nets_svd', demean=True, 
                                              dtype=np.float64, out_dir=out_dir,
                                              return_df=True)

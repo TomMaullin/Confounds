@@ -76,7 +76,11 @@ def _main(argv=None):
     # Make directory if it doesn't exist
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    
+
+    # Make tables directory if it doesn't exist
+    if not os.path.exists(os.path.join(out_dir,'tables')):
+        os.makedirs(os.path.join(out_dir,'tables'))
+        
     # Make memory map directory if it doesn't exist
     if not os.path.exists(os.path.join(out_dir, 'saved_memmaps')):
         os.makedirs(os.path.join(out_dir, 'saved_memmaps'))
@@ -244,6 +248,18 @@ def _main(argv=None):
         # Read in saved
         nonlinear_confounds_reduced = read_memmap_df(nonlinear_confounds_reduced_fname)
 
+        # Save tables
+        if os.path.exists(os.path.join(tmp_dir,'tables')):
+        
+            # Iterate over all the files in the source folder
+            for table in os.listdir(os.path.join(tmp_dir,'tables')):
+                src_path = os.path.join(os.path.join(tmp_dir,'tables'), table)
+                dest_path = os.path.join(os.path.join(out_dir,'tables'), table)
+                
+                # Check if it's a file and copy it
+                if os.path.isfile(src_path):
+                    shutil.copy2(src_path, dest_path)
+
 
     # --------------------------------------------------------------------------------
     # Stage 6: Generate crossed confounds
@@ -269,6 +285,17 @@ def _main(argv=None):
         IDPs_deconf_ct = read_memmap_df(IDPs_deconf_ct_fname)
         confounds_with_ct = read_memmap_df(confounds_with_ct_fname)
 
+        # Save tables
+        if os.path.exists(os.path.join(tmp_dir,'tables')):
+        
+            # Iterate over all the files in the source folder
+            for table in os.listdir(os.path.join(tmp_dir,'tables')):
+                src_path = os.path.join(os.path.join(tmp_dir,'tables'), table)
+                dest_path = os.path.join(os.path.join(out_dir,'tables'), table)
+                
+                # Check if it's a file and copy it
+                if os.path.isfile(src_path):
+                    shutil.copy2(src_path, dest_path)
     
     # --------------------------------------------------------------------------------
     # Stage 7: Generate smoothed confounds
@@ -402,9 +429,6 @@ def _main(argv=None):
         # Remove memmap folder
         if os.path.exists(os.path.join(out_dir, 'saved_memmaps')):
             shutil.rmtree(os.path.join(out_dir, 'saved_memmaps'))
-
-    # Analysis complete message
-    my_log(str(datetime.now()) +': Analysis complete!', mode='a', filename=logfile)
 
 if __name__ == "__main__":
     _main(sys.argv[1:])
