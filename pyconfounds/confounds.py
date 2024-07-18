@@ -430,5 +430,8 @@ def _main(argv=None):
         if os.path.exists(os.path.join(out_dir, 'saved_memmaps')):
             shutil.rmtree(os.path.join(out_dir, 'saved_memmaps'))
 
+    # Analysis complete message
+    my_log(str(datetime.now()) +': Analysis complete!', mode='a', filename=logfile)
+
 if __name__ == "__main__":
     _main(sys.argv[1:])
