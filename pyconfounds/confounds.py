@@ -412,7 +412,7 @@ def _main(argv=None):
         
         # Save the misc
         misc.to_csv(misc_fname)
-        my_log(str(datetime.now()) +': Miscellaneous varaibles saved as: ' + misc_fname, mode='a', filename=logfile)
+        my_log(str(datetime.now()) +': Miscellaneous variables saved as: ' + misc_fname, mode='a', filename=logfile)
         misc.unpersist()
         del misc
         
