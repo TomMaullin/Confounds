@@ -425,7 +425,39 @@ def generate_initial_variables(data_dir, out_dir, logfile=None):
         # Save column
         nonIDPs[['ID', col_name]].to_csv(file_path, sep=' ', index=False, header=False, na_rep='NaN')
         
+    # ----------------------------------------------------------------------------------
+    # NonIDP variable name files
+    # ----------------------------------------------------------------------------------
+
+    # Variable names to save
+    variable_names = [["Age"],["Sex"],["HeadSize"],["TimeOfDay"],["T1_and_T2_for_FreeSurfer"]]
+    file_names = ['AGE.txt', 'SEX.txt', 'HEADSIZE.txt', 'TOD.txt', 'FST2.txt']
+                              
+    # Open a text file in write mode
+    for i, file in enumerate(file_names):
     
+        # Check if the file exists and delete previous
+        if os.path.exists(os.path.join(out_dir,file)):
+            os.remove(os.path.join(out_dir,file))
+    
+        # Create file name file
+        with open(os.path.join(out_dir,file), "w") as file:
+            
+            # Iterate over the list of names
+            for j, varname in enumerate(variable_names[i]):
+    
+                # For all but the last name
+                if j < len(variable_names[i])-1:
+                    
+                    # Write each variable name to the file followed by a newline character
+                    file.write(varname + "\n")
+    
+                # Don't write the newline on the last one
+                else:
+    
+                    # Write variable name
+                    file.write(varname)
+            
     # ----------------------------------------------------------------------------------
     # Read in Eddy currents and tablepos (currently unused)
     # ----------------------------------------------------------------------------------
@@ -490,6 +522,48 @@ def generate_initial_variables(data_dir, out_dir, logfile=None):
     # Update log
     my_log(str(datetime.now()) +': Loaded miscellaneous variables and sorted.', mode='r', filename=logfile)
     my_log(str(datetime.now()) +': Saving results...', mode='a', filename=logfile)
+
+    # ----------------------------------------------------------------------------------
+    # Site IDs
+    # ----------------------------------------------------------------------------------
+
+    # Read in the IDs for site
+    site_ids = nets_load_match(os.path.join(data_dir, 'ID_SITE.txt'), sub_ids)
+
+    # Get the unique site ids
+    unique_site_ids = np.unique(site_ids)
+    
+    # Create a dictionary that maps each unique value to an integer factor
+    site_ids_to_factor = {value: idx for idx, value in enumerate(unique_site_ids)}
+    
+    # Apply this mapping to the original array
+    site_ids[:] = np.vectorize(site_ids_to_factor.get)(site_ids)
+
+    # Cast to integers
+    site_ids = site_ids.map(int)
+
+    # Add subject ids
+    site_ids = pd.concat((pd.DataFrame(sub_ids),site_ids),axis=1)
+    
+    # Get the filepath
+    file_path = os.path.join(out_dir, 'ID_SITE.txt')
+
+    # Remove previous file if needed
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # Save column
+    site_ids.to_csv(file_path, sep=' ', index=False, header=False, na_rep='NaN')
+
+    # Check if name file exists
+    if os.path.exists(os.path.join(out_dir,'SITE.txt')):
+        os.remove(os.path.join(out_dir,'SITE.txt'))
+
+    # Create file name file
+    with open(os.path.join(out_dir,'SITE.txt'), "w") as file:
+
+        # Write variable name
+        file.write('Site')
     
     # ----------------------------------------------------------------------------------
     # Output memmaps

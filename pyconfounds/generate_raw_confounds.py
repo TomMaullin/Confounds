@@ -30,7 +30,8 @@ from pyconfounds.logio.loading import ascii_loading_bar
 # It takes the following inputs:
 # - data_dir (string): A directory containing the input data in the format of matlab 
 #                      output.
-# - out_dir (string): The output directory for results to be saved to.
+# - out_dir (string): The output directory for results to be saved to (assumed to already
+#                     contain text files from previous stages).
 # - sub_ids (pd.Series): A list of subject IDs, indicating the row ordering for the 
 #                        final output dataframes.
 # - logfile (string): A html filename for the logs to be print to.
@@ -60,7 +61,7 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     dtypes = {0: 'int32', 1: 'Int16'}
 
     # Read in the IDs for site
-    site_ids = nets_load_match(os.path.join(data_dir, 'ID_SITE.txt'), sub_ids)
+    site_ids = nets_load_match(os.path.join(out_dir, 'ID_SITE.txt'), sub_ids)
 
     # Get the unique site ids
     unique_site_ids = np.unique(site_ids)
@@ -118,14 +119,14 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     # ----------------------------------------------------------------------------------
 
     # Construct dummy variables for the following
-    conf_sex          = duplicate_categorical('SEX',         sub_ids, inds_per_site, data_dir)
+    conf_sex          = duplicate_categorical('SEX',         sub_ids, inds_per_site, out_dir)
     conf_batch        = duplicate_categorical('BATCH',       sub_ids, inds_per_site, data_dir)
     conf_cmrr         = duplicate_categorical('CMRR',        sub_ids, inds_per_site, data_dir)
     conf_protocol     = duplicate_categorical('PROTOCOL',    sub_ids, inds_per_site, data_dir)
     conf_service_pack = duplicate_categorical('SERVICEPACK', sub_ids, inds_per_site, data_dir)
     conf_scan_events  = duplicate_categorical('SCANEVENTS',  sub_ids, inds_per_site, data_dir)
     conf_flipped_swi  = duplicate_categorical('FLIPPEDSWI',  sub_ids, inds_per_site, data_dir)
-    conf_fst2         = duplicate_categorical('FST2',        sub_ids, inds_per_site, data_dir)
+    conf_fst2         = duplicate_categorical('FST2',        sub_ids, inds_per_site, out_dir)
     conf_new_eddy     = duplicate_categorical('NEWEDDY',     sub_ids, inds_per_site, data_dir)
     conf_scaling      = duplicate_categorical('SCALING',     sub_ids, inds_per_site, data_dir)
     conf_time_points  = duplicate_categorical('TIMEPOINTS',  sub_ids, inds_per_site, data_dir)
@@ -159,12 +160,12 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     # Construct dummy variables for the following
     conf_head_motion         = duplicate_demedian_norm_by_site('HEADMOTION',       sub_ids, inds_per_site, data_dir)
     conf_head_motion_st      = duplicate_demedian_norm_by_site('HEADMOTIONST',     sub_ids, inds_per_site, data_dir)
-    conf_head_size           = duplicate_demedian_norm_by_site('HEADSIZE',         sub_ids, inds_per_site, data_dir)
+    conf_head_size           = duplicate_demedian_norm_by_site('HEADSIZE',         sub_ids, inds_per_site, out_dir)
     conf_table_pos           = duplicate_demedian_norm_by_site('TABLEPOS',         sub_ids, inds_per_site, data_dir)
     conf_dvars               = duplicate_demedian_norm_by_site('DVARS',            sub_ids, inds_per_site, data_dir)
     conf_eddy_qc             = duplicate_demedian_norm_by_site('EDDYQC',           sub_ids, inds_per_site, data_dir)
     conf_struct_head_motion  = duplicate_demedian_norm_by_site('STRUCTHEADMOTION', sub_ids, inds_per_site, data_dir)
-    conf_age                 = duplicate_demedian_norm_by_site('AGE',              sub_ids, inds_per_site, data_dir)
+    conf_age                 = duplicate_demedian_norm_by_site('AGE',              sub_ids, inds_per_site, out_dir)
     conf_te                  = duplicate_demedian_norm_by_site('TE',               sub_ids, inds_per_site, data_dir) 
     
     # Update log

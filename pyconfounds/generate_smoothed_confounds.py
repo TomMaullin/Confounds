@@ -161,7 +161,7 @@ def generate_smoothed_confounds(IDPs, confounds, nonIDPs, data_dir, out_dir,
     IDPs_deconf_sorted = IDPs_deconf.loc[sub_ids_sorted,:]
     
     # Read in the IDs for site
-    site_ids = nets_load_match(os.path.join(data_dir, 'ID_SITE.txt'), sub_ids)
+    site_ids = nets_load_match(os.path.join(out_dir, 'ID_SITE.txt'), sub_ids)
     site_ids.index = sub_ids
 
     # Sort site ids

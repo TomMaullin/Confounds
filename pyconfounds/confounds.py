@@ -1,5 +1,6 @@
 import os
 import yaml 
+import glob
 import shutil
 import tempfile
 import argparse
@@ -156,6 +157,13 @@ def _main(argv=None):
         nonIDPs = read_memmap_df(nonIDPs_fname)
         misc = read_memmap_df(misc_fname)
 
+        # Copy all .txt files in the temp directory
+        var_files = glob.glob(os.path.join(tmp_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, out_dir)
+
     
     # --------------------------------------------------------------------------------
     # Stage 2: Generate raw confounds
@@ -163,6 +171,13 @@ def _main(argv=None):
 
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
+
+        # Copy all .txt files to the temp directory
+        var_files = glob.glob(os.path.join(out_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, tmp_dir)
 
         # Get the subject IDs
         sub_ids = IDPs.index
@@ -187,6 +202,13 @@ def _main(argv=None):
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
     
+        # Copy all .txt files to the temp directory
+        var_files = glob.glob(os.path.join(out_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, tmp_dir)
+
         # Generate non linear confounds and deconfound IDPs
         nonlinear_confounds, IDPs_deconf = generate_nonlin_confounds(data_dir, tmp_dir, confounds, IDPs, cluster_cfg, logfile=logfile)
     
@@ -212,6 +234,13 @@ def _main(argv=None):
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
     
+        # Copy all .txt files to the temp directory
+        var_files = glob.glob(os.path.join(out_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, tmp_dir)
+
         # Generate non linear confounds and deconfound IDPs
         p, ve = get_p_vals_and_ve_cluster(data_dir, tmp_dir, nonlinear_confounds, 
                                           IDPs_deconf, cluster_cfg=cluster_cfg, 
@@ -235,6 +264,13 @@ def _main(argv=None):
     # --------------------------------------------------------------------------------
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
+
+        # Copy all .txt files to the temp directory
+        var_files = glob.glob(os.path.join(out_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, tmp_dir)
 
         # Work out reduced nonlinear confounds
         nonlinear_confounds_reduced = threshold_ve(ve, nonlinear_confounds, tmp_dir, logfile=logfile)
@@ -268,6 +304,13 @@ def _main(argv=None):
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
         
+        # Copy all .txt files to the temp directory
+        var_files = glob.glob(os.path.join(out_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, tmp_dir)
+
         # Work out crossed confounds
         IDPs_deconf_ct, confounds_with_ct = generate_crossed_confounds_cluster(IDPs, confounds, nonlinear_confounds_reduced, 
                                                                                data_dir, tmp_dir, cluster_cfg=cluster_cfg, 
@@ -304,6 +347,13 @@ def _main(argv=None):
     # Context manager temporary folder code
     with tempfile.TemporaryDirectory(dir=out_dir) as tmp_dir:
         
+        # Copy all .txt files to the temp directory
+        var_files = glob.glob(os.path.join(out_dir, '*.txt'))
+        
+        # Copy each text file to the destination directory
+        for file_path in var_files:
+            shutil.copy(file_path, tmp_dir)
+
         # Get smoothed confounds
         IDPs_deconf_smooth, confounds_with_smooth = generate_smoothed_confounds(IDPs, confounds_with_ct, nonIDPs, data_dir, 
                                                                                 tmp_dir, cluster_cfg, logfile=logfile)

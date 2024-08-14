@@ -99,7 +99,7 @@ def generate_nonlin_confounds(data_dir, out_dir, all_conf, IDPs, cluster_cfg,
     # -------------------------------------------------------------------------
     
     # Read in the IDs for site
-    site_ids = nets_load_match(os.path.join(data_dir, 'ID_SITE.txt'), sub_ids)
+    site_ids = nets_load_match(os.path.join(out_dir, 'ID_SITE.txt'), sub_ids)
 
     # Get the unique site ids
     unique_site_ids = np.unique(site_ids)

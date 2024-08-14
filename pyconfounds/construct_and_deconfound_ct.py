@@ -64,7 +64,7 @@ def construct_and_deconfound_ct(IDPs, confounds, data_dir, out_dir, crossed_inds
     n_IDPs = IDPs.shape[1]
     
     # Read in the IDs for site
-    site_ids = nets_load_match(os.path.join(data_dir, 'ID_SITE.txt'), sub_ids)
+    site_ids = nets_load_match(os.path.join(out_dir, 'ID_SITE.txt'), sub_ids)
     
     # Get the unique site ids
     unique_site_ids = np.unique(site_ids)
