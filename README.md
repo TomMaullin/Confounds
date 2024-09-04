@@ -20,7 +20,7 @@ jobqueue:
 
     # Dask worker options
     cores: 1                 # Total number of cores per job
-    memory: "100GB"                # Total amount of memory per job
+    memory: "200GB"                # Total amount of memory per job
     processes: 1                # Number of Python processes per job
 
     interface: ib0             # Network interface to use like eth0 or ib0
