@@ -132,7 +132,7 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     conf_time_points  = duplicate_categorical('TIMEPOINTS',  sub_ids, inds_per_site, data_dir)
     
     # Concatenate all the DataFrames/Series horizontally
-    categorical_IDPs = pd.concat([
+    categorical_confs = pd.concat([
         conf_sex.reset_index(drop=True), 
         conf_batch.reset_index(drop=True),
         conf_cmrr.reset_index(drop=True),
@@ -147,7 +147,7 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     ], axis=1)
 
     # Set row indices on dataframe
-    categorical_IDPs.index = sub_ids
+    categorical_confs.index = sub_ids
     
     # Update log
     my_log(str(datetime.now()) +': Categorical variables constructed.', mode='r', filename=logfile)
@@ -173,7 +173,7 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     my_log(str(datetime.now()) +': Saving variable groupings...', mode='a', filename=logfile)
     
     # Concatenate all the DataFrames/Series horizontally
-    continuous_IDPs = pd.concat([
+    continuous_confs = pd.concat([
         conf_age.reset_index(drop=True),
         conf_head_size.reset_index(drop=True),
         conf_te.reset_index(drop=True),
@@ -214,8 +214,8 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     # Create confounds dataframe
     confounds = pd.concat([
         conf_site.reset_index(drop=True),
-        categorical_IDPs.reset_index(drop=True),
-        continuous_IDPs.reset_index(drop=True),
+        categorical_confs.reset_index(drop=True),
+        continuous_confs.reset_index(drop=True),
         conf_age_sex.reset_index(drop=True)
     ], axis=1)
     
@@ -290,7 +290,7 @@ def generate_raw_confounds(data_dir, out_dir, sub_ids, logfile=None):
     my_log(str(datetime.now()) +': Stage 2 complete.', mode='a', filename=logfile)
     
     # Delete previous dataframes
-    del conf_site, categorical_IDPs, continuous_IDPs, conf_age_sex
+    del conf_site, categorical_confs, continuous_confs, conf_age_sex
     
     # Return the confounds
     return(confounds)
