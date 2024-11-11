@@ -171,7 +171,7 @@ memory_mapped_df.list_groups()
 And retrieve groups of variables using:
 
 ```
-memory_mapped_df.get_group(<group name>)
+memory_mapped_df.get_groups(<group name>)
 ```
 
 You can also search the columns using regular expressions:
